@@ -48,49 +48,49 @@
       },
       "cacheVariables": {
         "CPM_SOURCE_CACHE": "$env{HOME}/.cache/CPM",
-        "ASPH_ENABLE_COMPILE_COMMANDS": "ON"
+        "DRIP_ENABLE_COMPILE_COMMANDS": "ON"
       }
     },
     {
       "name": "dev-mode",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_WARNINGS": "ON",
-        "ASPH_ENABLE_CACHE": "ON",
-        "ASPH_ENABLE_UNITY_BUILD": "ON"
+        "DRIP_ENABLE_WARNINGS": "ON",
+        "DRIP_ENABLE_CACHE": "ON",
+        "DRIP_ENABLE_UNITY_BUILD": "ON"
       }
     },
     {
       "name": "release-mode",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_IPO": "ON",
-        "ASPH_ENABLE_UNITY_BUILD": "ON",
-        "ASPH_ENABLE_CACHE": "ON"
+        "DRIP_ENABLE_IPO": "ON",
+        "DRIP_ENABLE_UNITY_BUILD": "ON",
+        "DRIP_ENABLE_CACHE": "ON"
       }
     },
     {
       "name": "with-warnings",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_UNITY_BUILD": "ON",
-        "ASPH_ENABLE_WARNINGS_AS_ERRORS": "ON"
+        "DRIP_ENABLE_UNITY_BUILD": "ON",
+        "DRIP_ENABLE_WARNINGS_AS_ERRORS": "ON"
       }
     },
     {
       "name": "with-clang-tidy",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_UNITY_BUILD": "ON",
-        "ASPH_ENABLE_CLANG_TIDY": "ON"
+        "DRIP_ENABLE_UNITY_BUILD": "ON",
+        "DRIP_ENABLE_CLANG_TIDY": "ON"
       }
     },
     {
       "name": "with-cppcheck",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_UNITY_BUILD": "ON",
-        "ASPH_ENABLE_CPPCHECK": "ON"
+        "DRIP_ENABLE_UNITY_BUILD": "ON",
+        "DRIP_ENABLE_CPPCHECK": "ON"
       }
     },
     {
@@ -106,35 +106,35 @@
       "name": "with-asan",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_SANITIZER_ADDRESS": "ON"
+        "DRIP_ENABLE_SANITIZER_ADDRESS": "ON"
       }
     },
     {
       "name": "with-lsan",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_SANITIZER_LEAK": "ON"
+        "DRIP_ENABLE_SANITIZER_LEAK": "ON"
       }
     },
     {
       "name": "with-ubsan",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_SANITIZER_UNDEFINED": "ON"
+        "DRIP_ENABLE_SANITIZER_UNDEFINED": "ON"
       }
     },
     {
       "name": "with-msan",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_SANITIZER_MEMORY": "ON"
+        "DRIP_ENABLE_SANITIZER_MEMORY": "ON"
       }
     },
     {
       "name": "with-tsan",
       "hidden": true,
       "cacheVariables": {
-        "ASPH_ENABLE_SANITIZER_THREAD": "ON"
+        "DRIP_ENABLE_SANITIZER_THREAD": "ON"
       }
     },
     {
@@ -148,7 +148,7 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl",
-        "ASPH_CUDA_ENABLE_LINEINFO": "ON"
+        "DRIP_CUDA_ENABLE_LINEINFO": "ON"
       }
     },
     {
@@ -175,7 +175,7 @@
         "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl",
-        "ASPH_CUDA_ENABLE_LINEINFO": "ON"
+        "DRIP_CUDA_ENABLE_LINEINFO": "ON"
       }
     },
     {
