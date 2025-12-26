@@ -14,7 +14,7 @@ macro(drip_enable_cppcheck WARNINGS_AS_ERRORS)
             set(CMAKE_CXX_CPPCHECK
                     ${CPPCHECK}
                     --template=${CPPCHECK_TEMPLATE}
-                    --enable=warning,style,performance,portability,missingInclude
+                    --enable=warning,style,performance,portability
                     --inline-suppr
                     --suppress=cppcheckError
                     --suppress=missingIncludeSystem

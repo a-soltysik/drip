@@ -40,7 +40,7 @@ runs:
 
     - name: Install CUDA Toolkit (Linux)
       if: runner.os == 'Linux'
-      uses: Jimver/cuda-toolkit@v0.2.28
+      uses: Jimver/cuda-toolkit@v0.2.29
       with:
         method: network
         sub-packages: '["nvcc", "cudart", "thrust"]'

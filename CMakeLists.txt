@@ -23,7 +23,7 @@ set(CMAKE_CUDA_EXTENSIONS OFF)
 drip_setup_options()
 drip_global_options()
 
-if (SPH_ENABLE_COMPILE_COMMANDS)
+if (DRIP_ENABLE_COMPILE_COMMANDS)
     drip_enable_compile_commands()
 endif ()
 
@@ -35,8 +35,8 @@ drip_local_options()
 
 target_compile_features(drip_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
-add_library(drip::drip_options ALIAS drip_options)
-add_library(drip::drip_warnings ALIAS drip_warnings)
+add_library(drip::options ALIAS drip_options)
+add_library(drip::warnings ALIAS drip_warnings)
 
 add_subdirectory(src)
 

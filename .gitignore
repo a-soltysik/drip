@@ -1,10 +1,13 @@
 .idea/
 .vscode/
 .vs/
+.cache/
 
 build/
 out/
 cmake-*/
 
-compile_commands.json
 CMakeCache.txt
+CMakeFiles/
+
+compile_commands.json

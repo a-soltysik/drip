@@ -24,9 +24,8 @@ macro(drip_setup_options)
     option(DRIP_ENABLE_CLANG_TIDY "Enable clang-tidy" OFF)
     option(DRIP_ENABLE_CPPCHECK "Enable cpp-check analysis" OFF)
     option(DRIP_ENABLE_IWYU "Enable include-what-you-use analysis" OFF)
-    option(DRIP_ENABLE_PCH "Enable precompiled headers" OFF)
     option(DRIP_ENABLE_CACHE "Enable ccache" OFF)
-    option(DRIP_ENABLE_COMPILE_COMMANDS "Enable support for compile_commnads.json" OFF)
+    option(DRIP_ENABLE_COMPILE_COMMANDS "Enable support for compile_commands.json" OFF)
     option(DRIP_ENABLE_FAST_MATH "Enable fast math compilation flags" OFF)
     option(DRIP_CUDA_ENABLE_CUSTOM_ARCHITECTURES "Enable choosing CUDA architectures" OFF)
     option(DRIP_CUDA_ENABLE_DEBUG "Enable CUDA debug symbols (-G)" OFF)
@@ -52,9 +51,9 @@ macro(drip_setup_options)
                 DRIP_ENABLE_CACHE
                 DRIP_ENABLE_COMPILE_COMMANDS
                 DRIP_ENABLE_FAST_MATH
-                DRIP_CUDA_ENABLE_CUSTOM_ARCHITECTURES OFF
-                DRIP_CUDA_ENABLE_DEBUG OFF
-                DRIP_CUDA_ENABLE_LINEINFO OFF)
+                DRIP_CUDA_ENABLE_CUSTOM_ARCHITECTURES
+                DRIP_CUDA_ENABLE_DEBUG
+                DRIP_CUDA_ENABLE_LINEINFO)
     endif ()
 
 endmacro()
@@ -114,15 +113,6 @@ macro(drip_local_options)
             ${DRIP_ENABLE_SANITIZER_MEMORY})
 
     set_target_properties(drip_options PROPERTIES UNITY_BUILD ${DRIP_ENABLE_UNITY_BUILD})
-
-    if (DRIP_ENABLE_PCH)
-        target_precompile_headers(
-                drip_options
-                INTERFACE
-                <vector>
-                <string>
-                <utility>)
-    endif ()
 
     if (DRIP_ENABLE_CACHE)
         include(cmake/Cache.cmake)
