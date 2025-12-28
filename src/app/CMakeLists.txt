@@ -3,7 +3,9 @@ add_executable(drip)
 target_sources(
         drip
         PRIVATE
+        App.cpp
         main.cpp
+        SystemSignalHandler.cpp
         Window.cpp)
 
 target_link_libraries(
@@ -19,7 +21,7 @@ target_link_system_libraries(
         PRIVATE
         drip::engine
         drip::common
-        
+
         glfw
         glm
         imgui
