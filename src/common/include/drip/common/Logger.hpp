@@ -2,9 +2,14 @@
 
 #include <fmt/base.h>
 #include <fmt/core.h>
+#include <fmt/format.h>
 #include <fmt/os.h>
 
 #include <atomic>
+#include <boost/exception/detail/exception_ptr.hpp>
+#include <boost/exception/diagnostic_information.hpp>
+#include <boost/exception_ptr.hpp>
+#include <boost/stacktrace/stacktrace.hpp>
 #include <chrono>
 #include <condition_variable>
 #include <cstdint>
@@ -20,6 +25,9 @@
 #include <string_view>
 #include <thread>
 #include <vector>
+
+#include "drip/common/utils/format/ExceptionFormatter.hpp"   // NOLINT(misc-include-cleaner)
+#include "drip/common/utils/format/StacktraceFormatter.hpp"  // NOLINT(misc-include-cleaner)
 
 namespace drip::common::log
 {
@@ -117,6 +125,17 @@ struct Error
     explicit Error(std::string_view format,
                    Args&&... args,
                    std::source_location location = std::source_location::current()) noexcept;
+};
+
+template <typename... Args>
+struct Exception
+{
+    explicit Exception(
+        std::string_view format,
+        Args&&... args,
+        boost::exception_ptr exception = boost::current_exception(),
+        boost::stacktrace::stacktrace stacktrace = boost::stacktrace::stacktrace::from_current_exception(),
+        std::source_location location = std::source_location::current()) noexcept;
 };
 
 namespace internal
@@ -223,6 +242,20 @@ Error<Args...>::Error(std::string_view format, Args&&... args, std::source_locat
 }
 
 template <typename... Args>
+Exception<Args...>::Exception(std::string_view format,
+                              Args&&... args,
+                              boost::exception_ptr exception,
+                              boost::stacktrace::stacktrace stacktrace,
+                              std::source_location location) noexcept
+{
+    internal::LogDispatcher::log(Level::Error,
+                                 fmt::format("{}\n{}",
+                                             fmt::format(fmt::runtime(format), std::forward<Args>(args)...),
+                                             fmt::format("{}\nAt:\n{}", exception, stacktrace)),
+                                 location);
+}
+
+template <typename... Args>
 Debug(std::string_view, Args&&...) -> Debug<Args...>;
 
 template <typename... Args>
@@ -233,4 +266,7 @@ Warning(std::string_view, Args&&...) -> Warning<Args...>;
 
 template <typename... Args>
 Error(std::string_view, Args&&...) -> Error<Args...>;
+
+template <typename... Args>
+Exception(std::string_view, Args&&...) -> Exception<Args...>;
 }

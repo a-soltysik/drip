@@ -3,6 +3,7 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 
+#include <concepts>
 #include <cstdlib>
 #include <drip/common/Logger.hpp>
 #include <optional>
@@ -108,11 +109,11 @@ void expectNot(std::convertible_to<bool> auto&& result,
 
 template <typename T>
 auto expectNot(T&& result,
-               const std::equality_comparable_with<T> auto& expected,
+               const std::equality_comparable_with<T> auto& notExpected,
                std::string_view message,
                std::source_location location = std::source_location::current()) noexcept -> T
 {
-    if (result == expected) [[unlikely]]
+    if (result == notExpected) [[unlikely]]
     {
         if constexpr (fmt::is_formattable<std::decay_t<T>>() || std::is_enum<std::decay_t<T>>())
         {
@@ -128,12 +129,12 @@ auto expectNot(T&& result,
 
 template <Result T>
 auto expectNot(T&& result,
-               const typename ResultHelper<T>::Error& expected,
+               const typename ResultHelper<T>::Error& notExpected,
                std::string_view message,
                std::source_location location = std::source_location::current()) noexcept
     -> ResultHelper<std::remove_reference_t<T>>::Ok
 {
-    if (result.result == expected) [[unlikely]]
+    if (result.result == notExpected) [[unlikely]]
     {
         panic(fmt::format("{}: {}", message, result.result), location);
     }
@@ -214,11 +215,11 @@ auto shouldBe(const T& value,
 
 template <typename T>
 auto shouldNotBe(const T& result,
-                 const std::equality_comparable_with<T> auto& expected,
+                 const std::equality_comparable_with<T> auto& notExpected,
                  std::string_view message,
                  std::source_location location = std::source_location::current()) noexcept -> bool
 {
-    if (result == expected) [[unlikely]]
+    if (result == notExpected) [[unlikely]]
     {
         if constexpr (fmt::is_formattable<std::decay_t<T>>() || std::is_enum<std::decay_t<T>>())
         {
