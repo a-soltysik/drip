@@ -6,7 +6,7 @@
 
 #include <array>
 #include <cstdint>
-#include <drip/common/Logger.hpp>
+#include <drip/common/log/LogMessageBuilder.hpp>
 #include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>

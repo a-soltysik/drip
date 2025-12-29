@@ -7,6 +7,7 @@ Checks: "*,
   -google-*,
   -llvm*,
   -zircon-*,
+  -bugprone-unused-raii,
   -cppcoreguidelines-pro-type-union-access
   "
 WarningsAsErrors: "*,

@@ -1,9 +1,9 @@
 #include "SystemSignalHandler.hpp"
 
-#include <boost/stacktrace/stacktrace.hpp>
 #include <csignal>
 #include <cstdlib>
-#include <drip/common/Logger.hpp>
+#include <drip/common/log/LogMessageBuilder.hpp>
+#include <drip/common/log/Logger.hpp>
 #include <drip/common/utils/Assert.hpp>
 #include <string_view>
 
@@ -35,8 +35,7 @@ namespace
 
 [[noreturn]] void signalHandler(const int signalValue)
 {
-    common::log::Error("Received {} signal", getSignalName(signalValue));
-    common::log::Error("Stacktrace:\n{}", boost::stacktrace::stacktrace {});
+    common::log::Error("Received {} signal", getSignalName(signalValue)).withStacktrace();
     common::log::Logger::instance().stop();
     std::_Exit(signalValue);
 }
