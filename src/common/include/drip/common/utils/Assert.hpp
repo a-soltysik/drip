@@ -5,12 +5,13 @@
 
 #include <concepts>
 #include <cstdlib>
-#include <drip/common/Logger.hpp>
 #include <optional>
 #include <source_location>
 #include <string_view>
 #include <type_traits>
 #include <utility>
+
+#include "drip/common/log/LogMessageBuilder.hpp"
 
 namespace drip::common
 {
@@ -36,7 +37,7 @@ struct ResultHelper
 [[noreturn]] inline auto panic(std::string_view message,
                                std::source_location location = std::source_location::current()) noexcept
 {
-    log::internal::LogDispatcher::log(log::Level::Error, fmt::format("Terminal error: {}", message), location);
+    log::detail::LogMessageBuilder {fmt::format("Terminal error: {}", message), location, log::Level::Error};
     panic();
 }
 
@@ -176,11 +177,11 @@ auto shouldBe(const T& result,
     {
         if constexpr (fmt::is_formattable<std::decay_t<T>>() || std::is_enum<std::decay_t<T>>())
         {
-            log::internal::LogDispatcher::log(log::Level::Error, fmt::format("{}: {}", message, result), location);
+            log::detail::LogMessageBuilder {fmt::format("{}: {}", message, result), location, log::Level::Error};
         }
         else
         {
-            log::internal::LogDispatcher::log(log::Level::Error, fmt::format("{}", message), location);
+            log::detail::LogMessageBuilder {fmt::format("{}", message), location, log::Level::Error};
         }
         return false;
     }
@@ -193,7 +194,7 @@ auto shouldBe(std::convertible_to<bool> auto&& result,
 {
     if (!result) [[unlikely]]
     {
-        log::internal::LogDispatcher::log(log::Level::Error, fmt::format("{}", message), location);
+        log::detail::LogMessageBuilder {fmt::format("{}", message), location, log::Level::Warning};
         return false;
     }
     return true;
@@ -207,7 +208,7 @@ auto shouldBe(const T& value,
 {
     if (!predicate(value)) [[unlikely]]
     {
-        log::internal::LogDispatcher::log(log::Level::Error, fmt::format("{}", message), location);
+        log::detail::LogMessageBuilder {fmt::format("{}", message), location, log::Level::Warning};
         return false;
     }
     return true;
@@ -223,11 +224,11 @@ auto shouldNotBe(const T& result,
     {
         if constexpr (fmt::is_formattable<std::decay_t<T>>() || std::is_enum<std::decay_t<T>>())
         {
-            log::internal::LogDispatcher::log(log::Level::Error, fmt::format("{}: {}", message, result), location);
+            log::detail::LogMessageBuilder {fmt::format("{}: {}", message, result), location, log::Level::Warning};
         }
         else
         {
-            log::internal::LogDispatcher::log(log::Level::Error, fmt::format("{}", message), location);
+            log::detail::LogMessageBuilder {fmt::format("{}", message), location, log::Level::Warning};
         }
         return false;
     }

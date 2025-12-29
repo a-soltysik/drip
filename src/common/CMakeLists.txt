@@ -4,7 +4,11 @@ add_library(drip::common ALIAS drip_common)
 target_sources(
         drip_common
         PRIVATE
-        src/Logger.cpp
+        src/log/Logger.cpp
+        src/log/LogMessageBuilder.cpp
+        src/log/sink/ConsoleSink.cpp
+        src/log/sink/FileSink.cpp
+        src/utils/Timer.cpp
 )
 
 target_include_directories(
@@ -24,7 +28,8 @@ target_link_system_libraries(
         fmt::fmt
         Boost::exception
         Boost::stacktrace
-        Boost::stacktrace_from_exception)
+        Boost::stacktrace_from_exception
+        Boost::thread)
 
 target_link_libraries(
         drip_common

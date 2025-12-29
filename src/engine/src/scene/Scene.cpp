@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <ctre.hpp>  // NOLINT(misc-include-cleaner)
 #include <ctre/wrapper.hpp>
-#include <drip/common/Logger.hpp>
+#include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/Utils.hpp>
 #include <functional>
 #include <memory>

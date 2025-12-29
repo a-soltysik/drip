@@ -1,4 +1,4 @@
-#include <drip/common/Logger.hpp>
+#include <drip/common/log/LogMessageBuilder.hpp>
 
 #include "App.hpp"
 
@@ -10,7 +10,9 @@ auto main(int /*argc*/, char** /*argv*/) -> int
     }
     catch (...)
     {
-        drip::common::log::Exception("Unhandled critical exception");  //NOLINT(bugprone-throw-keyword-missing)
+        drip::common::log::Debug("Unhandled critical exception")
+            .withCurrentException()
+            .withStacktraceFromCurrentException();
         return -1;
     }
 }

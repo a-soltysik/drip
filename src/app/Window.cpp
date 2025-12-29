@@ -8,7 +8,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdint>
-#include <drip/common/Logger.hpp>
+#include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/Assert.hpp>
 #include <drip/engine/Window.hpp>
 #include <drip/engine/utils/Signals.hpp>

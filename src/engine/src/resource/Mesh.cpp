@@ -5,7 +5,7 @@
 #include "drip/engine/resource/Mesh.hpp"
 
 #include <cstdint>
-#include <drip/common/Logger.hpp>
+#include <drip/common/log/LogMessageBuilder.hpp>
 #include <memory>
 #include <span>
 #include <string>

@@ -8,7 +8,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <drip/common/Logger.hpp>
+#include <drip/common/log/LogMessageBuilder.hpp>
 #include <limits>
 #include <optional>
 #include <span>

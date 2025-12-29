@@ -13,7 +13,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <drip/common/Logger.hpp>
+#include <drip/common/log/LogMessageBuilder.hpp>
 #include <functional>
 #include <memory>
 #include <optional>

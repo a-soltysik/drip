@@ -6,7 +6,7 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <drip/common/Logger.hpp>
+#include <drip/common/log/LogMessageBuilder.hpp>
 #include <optional>
 #include <ranges>
 #include <span>

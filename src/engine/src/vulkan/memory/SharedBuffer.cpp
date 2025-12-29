@@ -1,4 +1,5 @@
 // clang-format off
+#include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/Assert.hpp>
 // clang-format on
 
@@ -7,7 +8,6 @@
 #include <vulkan/vulkan.h>  // NOLINT(misc-include-cleaner)
 
 #include <cstddef>
-#include <drip/common/Logger.hpp>
 #include <drip/common/utils/Utils.hpp>
 #include <memory>
 #include <vulkan/vulkan.hpp>
