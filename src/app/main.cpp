@@ -6,7 +6,7 @@ auto main(int /*argc*/, char** /*argv*/) -> int
 {
     try
     {
-        drip::app::App::run();
+        drip::app::App {}.run();
     }
     catch (...)
     {

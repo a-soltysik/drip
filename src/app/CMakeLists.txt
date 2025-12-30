@@ -6,7 +6,8 @@ target_sources(
         App.cpp
         main.cpp
         SystemSignalHandler.cpp
-        Window.cpp)
+        Window.cpp
+        mesh/InvertedCube.cpp)
 
 target_link_libraries(
         drip

@@ -8,26 +8,27 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
+#include "drip/engine/rendering/Renderer.hpp"
 #include "drip/engine/rendering/system/RenderSystem.hpp"
-#include "drip/engine/resource/Object.hpp"
-#include "vulkan/memory/Descriptor.hpp"
-#include "vulkan/pipeline/Pipeline.hpp"
+#include "drip/engine/resource/MeshRenderable.hpp"
 
 namespace drip::engine::gfx
 {
 
 class Device;
 struct FrameInfo;
+class DescriptorSetLayout;
+class Pipeline;
 
-class DefaultRenderSystem : public RenderSystem
+class MeshRenderSystem : public RenderSystem
 {
 public:
-    DefaultRenderSystem(const Device& device, vk::RenderPass renderPass);
-    DefaultRenderSystem(const DefaultRenderSystem&) = delete;
-    DefaultRenderSystem(DefaultRenderSystem&&) = delete;
-    auto operator=(const DefaultRenderSystem&) = delete;
-    auto operator=(DefaultRenderSystem&&) = delete;
-    ~DefaultRenderSystem() noexcept override;
+    MeshRenderSystem(const Device& device, const Renderer& renderer);
+    MeshRenderSystem(const MeshRenderSystem&) = delete;
+    MeshRenderSystem(MeshRenderSystem&&) = delete;
+    auto operator=(const MeshRenderSystem&) = delete;
+    auto operator=(MeshRenderSystem&&) = delete;
+    ~MeshRenderSystem() noexcept override;
 
     void render(const FrameInfo& frameInfo) const override;
 
@@ -36,7 +37,7 @@ private:
     static auto createPipeline(const Device& device, vk::RenderPass renderPass, vk::PipelineLayout pipelineLayout)
         -> std::unique_ptr<Pipeline>;
 
-    void renderObject(const Object& object, const FrameInfo& frameInfo) const;
+    void renderObject(const MeshRenderable& object, const FrameInfo& frameInfo) const;
 
     const Device& _device;
     std::unique_ptr<DescriptorSetLayout> _descriptorLayout;

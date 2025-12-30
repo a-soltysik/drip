@@ -5,7 +5,7 @@ target_sources(
         drip_engine
         PRIVATE
         src/resource/Mesh.cpp
-        src/resource/Object.cpp
+        src/resource/MeshRenderable.cpp
         src/resource/Surface.cpp
         src/resource/Texture.cpp
 
@@ -13,7 +13,7 @@ target_sources(
         src/scene/Scene.cpp
 
         src/rendering/Renderer.cpp
-        src/rendering/system/DefaultRenderSystem.cpp
+        src/rendering/system/MeshRenderSystem.cpp
 
         src/vulkan/core/Context.cpp
         src/vulkan/core/Device.cpp
@@ -46,8 +46,7 @@ target_link_system_libraries(
         drip::common
         Vulkan::Vulkan
         glm::glm
-        imgui::imgui
-        ctre::ctre)
+        imgui::imgui)
 
 target_link_libraries(
         drip_engine

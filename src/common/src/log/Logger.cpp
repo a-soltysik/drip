@@ -164,12 +164,12 @@ namespace
 
 auto findStartOfFunctionName(std::string_view function) -> size_t
 {
-    const auto firstScope = function.find("::");
-    if (firstScope == std::string_view::npos)
+    const auto firstBracket = function.find('(');
+    if (firstBracket == std::string_view::npos)
     {
         return 0;
     }
-    const auto lastSpace = function.rfind(' ', firstScope);
+    const auto lastSpace = function.rfind(' ', firstBracket - 2);
     if (lastSpace == std::string_view::npos)
     {
         return 0;

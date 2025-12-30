@@ -21,6 +21,15 @@
 namespace drip::common::utils
 {
 
+template <class... Ts>
+struct overload : Ts...
+{
+    using Ts::operator()...;
+};
+
+template <class... Ts>
+overload(Ts...) -> overload<Ts...>;
+
 template <typename T, size_t N, template <typename, typename...> typename To = std::vector>
 auto fromArray(const std::array<T, N>& array) -> To<T>
 {
