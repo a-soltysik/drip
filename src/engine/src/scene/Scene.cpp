@@ -1,64 +1,31 @@
 #include "drip/engine/scene/Scene.hpp"
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <ctre.hpp>  // NOLINT(misc-include-cleaner)
-#include <ctre/wrapper.hpp>
 #include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/Utils.hpp>
 #include <functional>
 #include <memory>
-#include <numeric>
 #include <optional>
 #include <ranges>
-#include <string>
 #include <string_view>
-#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
 
-#include "drip/engine/resource/Object.hpp"
-#include "drip/engine/resource/Surface.hpp"
+#include "drip/engine/resource/MeshRenderable.hpp"
+#include "drip/engine/resource/Renderable.hpp"
 #include "drip/engine/scene/Camera.hpp"
 #include "drip/engine/scene/Light.hpp"
 
 namespace drip::engine::gfx
 {
 
-auto Scene::getSize() const noexcept -> size_t
-{
-    return std::accumulate(_objects.begin(),
-                           _objects.end(),
-                           size_t {},
-                           [](auto current, const auto& object) {
-                               return current + object->getSurfaces().size();
-                           }) +
-           _lights.spotLights.size() + _lights.pointLights.size() + _lights.directionalLights.size();
-}
-
-auto Scene::addObject(std::string name, const std::vector<Surface>& surfaces) -> Object&
-{
-    auto newObject = std::make_unique<Object>(getUniqueName(std::move(name)));
-    for (const auto& surface : surfaces)
-    {
-        newObject->addSurface(surface);
-    }
-
-    auto* objectPtr = newObject.get();
-    _objects.push_back(std::move(newObject));
-
-    _names.insert(objectPtr->getName());
-    return *objectPtr;
-}
-
-auto Scene::getObjects() const noexcept -> const std::vector<std::unique_ptr<Object>>&
-{
-    return _objects;
-}
-
 auto Scene::getLights() const noexcept -> const Lights&
+{
+    return _lights;
+}
+
+auto Scene::getLights() noexcept -> Lights&
 {
     return _lights;
 }
@@ -73,36 +40,93 @@ auto Scene::getCamera() noexcept -> Camera&
     return _camera;
 }
 
-auto Scene::removeObjectByName(std::string_view name) -> bool
+auto Scene::getRenderables() const noexcept -> const std::vector<std::unique_ptr<Renderable>>&
 {
-    const auto objectIt = std::ranges::find(_objects, name, &Object::getName);
-    if (objectIt != std::ranges::end(_objects))
-    {
-        removeName(name);
-        _objects.erase(objectIt);
-        return true;
-    }
-    return false;
+    return _renderables;
 }
 
-auto Scene::findObjectByName(std::string_view name) -> std::optional<Object*>
+auto Scene::addRenderable(std::unique_ptr<Renderable> renderable) -> bool
 {
-    const auto objectIt = std::ranges::find(_objects, name, &Object::getName);
-    if (objectIt != std::ranges::end(_objects))
+    const auto name = renderable->getName();
+    if (isNameUsed(name))
     {
-        return objectIt->get();
+        common::log::Warning("Name {} is already used", name);
+        return false;
     }
-    return {};
+    _renderableNames.emplace(name, renderable.get());
+    _renderables.push_back(std::move(renderable));
+    common::log::Info("Added renderable with name {}", name);
+    return true;
 }
 
-auto Scene::findObjectByName(std::string_view name) const -> std::optional<const Object*>
+auto Scene::removeRenderableByName(std::string_view name) -> bool
 {
-    const auto objectIt = std::ranges::find(_objects, name, &Object::getName);
-    if (objectIt != std::ranges::end(_objects))
+    const auto nameIt = _renderableNames.find(name);
+    if (nameIt == _renderableNames.end())
     {
-        return objectIt->get();
+        common::log::Warning("Name {} is not found", name);
+        return false;
     }
-    return {};
+
+    auto* renderablePtr = nameIt->second;
+    _renderableNames.erase(nameIt);
+
+    const auto renderableIt = std::ranges::find(_renderables, renderablePtr, &std::unique_ptr<Renderable>::get);
+    if (renderableIt == std::ranges::end(_renderables))
+    {
+        common::log::Warning("Renderable with name {} is not found", name);
+        return false;
+    }
+    _renderables.erase(renderableIt);
+    common::log::Info("Removed renderable with name {}", name);
+    return true;
+}
+
+auto Scene::findRenderableByName(std::string_view name) -> std::optional<std::reference_wrapper<Renderable>>
+{
+    const auto nameIt = _renderableNames.find(name);
+    if (nameIt == _renderableNames.end())
+    {
+        common::log::Warning("Name {} is not found", name);
+        return {};
+    }
+    return *nameIt->second;
+}
+
+auto Scene::addLight(std::variant<DirectionalLight, PointLight, SpotLight> lightVariant) -> bool
+{
+    return std::visit(
+        common::utils::overload {[this](const DirectionalLight& light) {
+                                     if (isNameUsed(light.name))
+                                     {
+                                         common::log::Warning("Name {} is already used", light.name);
+                                         return false;
+                                     }
+                                     _lights.directionalLights.push_back(light);
+                                     _lightNames.emplace(light.name, std::ref(_lights.directionalLights.back()));
+                                     return true;
+                                 },
+                                 [this](const PointLight& light) {
+                                     if (isNameUsed(light.name))
+                                     {
+                                         common::log::Warning("Name {} is already used", light.name);
+                                         return false;
+                                     }
+                                     _lights.pointLights.push_back(light);
+                                     _lightNames.emplace(light.name, std::ref(_lights.pointLights.back()));
+                                     return true;
+                                 },
+                                 [this](const SpotLight& light) {
+                                     if (isNameUsed(light.name))
+                                     {
+                                         common::log::Warning("Name {} is already used", light.name);
+                                         return false;
+                                     }
+                                     _lights.spotLights.push_back(light);
+                                     _lightNames.emplace(light.name, std::ref(_lights.spotLights.back()));
+                                     return true;
+                                 }},
+        lightVariant);
 }
 
 auto Scene::findLightByName(std::string_view name) -> std::variant<std::reference_wrapper<DirectionalLight>,
@@ -110,150 +134,30 @@ auto Scene::findLightByName(std::string_view name) -> std::variant<std::referenc
                                                                    std::reference_wrapper<SpotLight>,
                                                                    std::monostate>
 {
-    const auto directionalLightIt = std::ranges::find(_lights.directionalLights, name, &BaseLight::name);
-    if (directionalLightIt != std::ranges::end(_lights.directionalLights))
+    const auto nameIt = _lightNames.find(name);
+    if (nameIt == _lightNames.end())
     {
-        return std::ref(*directionalLightIt);
+        common::log::Warning("Name {} is not found", name);
+        return std::monostate {};
     }
-    const auto pointLightIt = std::ranges::find(_lights.pointLights, name, &BaseLight::name);
-    if (pointLightIt != std::ranges::end(_lights.pointLights))
-    {
-        return std::ref(*pointLightIt);
-    }
-    const auto spotLightIt = std::ranges::find(_lights.spotLights, name, &BaseLight::name);
-    if (spotLightIt != std::ranges::end(_lights.spotLights))
-    {
-        return std::ref(*spotLightIt);
-    }
-    return std::monostate {};
+    return std::visit<std::variant<std::reference_wrapper<DirectionalLight>,
+                                   std::reference_wrapper<PointLight>,
+                                   std::reference_wrapper<SpotLight>,
+                                   std::monostate>>(common::utils::overload {[](DirectionalLight& light) {
+                                                                                 return std::ref(light);
+                                                                             },
+                                                                             [](PointLight& light) {
+                                                                                 return std::ref(light);
+                                                                             },
+                                                                             [](SpotLight& light) {
+                                                                                 return std::ref(light);
+                                                                             }},
+                                                    nameIt->second);
 }
 
-auto Scene::findLightByName(std::string_view name) const -> std::variant<std::reference_wrapper<const DirectionalLight>,
-                                                                         std::reference_wrapper<const PointLight>,
-                                                                         std::reference_wrapper<const SpotLight>,
-                                                                         std::monostate>
+auto Scene::isNameUsed(std::string_view name) const -> bool
 {
-    const auto directionalLightIt = std::ranges::find(_lights.directionalLights, name, &BaseLight::name);
-    if (directionalLightIt != std::ranges::end(_lights.directionalLights))
-    {
-        return std::cref(*directionalLightIt);
-    }
-    const auto pointLightIt = std::ranges::find(_lights.pointLights, name, &BaseLight::name);
-    if (pointLightIt != std::ranges::end(_lights.pointLights))
-    {
-        return std::cref(*pointLightIt);
-    }
-    const auto spotLightIt = std::ranges::find(_lights.spotLights, name, &BaseLight::name);
-    if (spotLightIt != std::ranges::end(_lights.spotLights))
-    {
-        return std::cref(*spotLightIt);
-    }
-    return std::monostate {};
-}
-
-auto Scene::removeLightByName(std::string_view name) -> bool
-{
-    const auto directionalLightIt = std::ranges::find(_lights.directionalLights, name, &BaseLight::name);
-    if (directionalLightIt != std::ranges::end(_lights.directionalLights))
-    {
-        removeName(name);
-        _lights.directionalLights.erase(directionalLightIt);
-        return true;
-    }
-    const auto pointLightIt = std::ranges::find(_lights.pointLights, name, &BaseLight::name);
-    if (pointLightIt != std::ranges::end(_lights.pointLights))
-    {
-        removeName(name);
-        _lights.pointLights.erase(pointLightIt);
-        return true;
-    }
-    const auto spotLightIt = std::ranges::find(_lights.spotLights, name, &BaseLight::name);
-    if (spotLightIt != std::ranges::end(_lights.spotLights))
-    {
-        removeName(name);
-        _lights.spotLights.erase(spotLightIt);
-        return true;
-    }
-    return false;
-}
-
-auto Scene::getUniqueName(std::string name) -> std::string
-{
-    if (!_names.contains(name))
-    {
-        return name;
-    }
-
-    uint32_t maxNumber = 1;
-
-    for (const auto currentName : _names)
-    {
-        if (auto match = ctre::match<R"(^.*#(\d+)$)">(currentName))
-        {
-            if (auto numberValue = common::utils::toNumber<uint32_t>(match.get<1>().to_view()); numberValue)
-            {
-                maxNumber = std::max(maxNumber, *numberValue + 1);
-            }
-        }
-    }
-    auto& prefix = name += '#';
-    return prefix += common::utils::toString(maxNumber);
-}
-
-void Scene::removeName(std::string_view name)
-{
-    common::log::Info("Removed object with name {}", name);
-    _names.erase(name);
-}
-
-auto Scene::getAllNames() const noexcept -> const std::unordered_set<std::string_view>&
-{
-    return _names;
-}
-
-auto Scene::setDomain(std::string name, const std::vector<Surface>& surfaces) -> Object&
-{
-    auto newObject = std::make_unique<Object>(getUniqueName(std::move(name)));
-    for (const auto& surface : surfaces)
-    {
-        newObject->addSurface(surface);
-    }
-
-    if (_domain)
-    {
-        removeName(_domain->getName());
-    }
-
-    auto* objectPtr = newObject.get();
-    _domain = std::move(newObject);
-
-    _names.insert(objectPtr->getName());
-    return *objectPtr;
-}
-
-auto Scene::getDomain() const -> Object&
-{
-    return *_domain;
-}
-
-auto Scene::setParticleCount(uint32_t count)
-{
-    _particleCount = count;
-}
-
-auto Scene::getParticleCount() const -> uint32_t
-{
-    return _particleCount;
-}
-
-auto Scene::setBoundaryParticleCount(uint32_t count)
-{
-    _boundaryParticleCount = count;
-}
-
-auto Scene::getBoundaryParticleCount() const -> uint32_t
-{
-    return _boundaryParticleCount;
+    return _lightNames.contains(name) || _renderableNames.contains(name);
 }
 
 }

@@ -4,13 +4,6 @@ function(drip_setup_dependencies)
     CPMAddPackage("gh:g-truc/glm#1.0.2")
     CPMAddPackage("gh:glfw/glfw#3.4")
     CPMAddPackage(
-            NAME
-            ctre
-            VERSION
-            3.9.0
-            GITHUB_REPOSITORY
-            hanickadot/compile-time-regular-expressions)
-    CPMAddPackage(
             NAME Boost
             VERSION 1.90.0
             URL https://github.com/boostorg/boost/releases/download/boost-1.90.0/boost-1.90.0-cmake.tar.xz

@@ -2,20 +2,23 @@
 #include <drip/common/utils/Assert.hpp>
 // clang-format on
 
-#include "DefaultRenderSystem.hpp"
+#include "drip/engine/rendering/system/MeshRenderSystem.hpp"
 
 #include <cstddef>
 #include <drip/common/utils/Utils.hpp>
 #include <filesystem>
 #include <glm/ext/vector_float3.hpp>
 #include <memory>
+#include <ranges>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
 #include "drip/engine/internal/config.hpp"
+#include "drip/engine/rendering/Renderer.hpp"
 #include "drip/engine/resource/Mesh.hpp"
-#include "drip/engine/resource/Object.hpp"
+#include "drip/engine/resource/MeshRenderable.hpp"
+#include "drip/engine/resource/Renderable.hpp"
 #include "drip/engine/resource/Surface.hpp"
 #include "drip/engine/resource/Texture.hpp"
 #include "drip/engine/resource/Vertex.hpp"
@@ -39,7 +42,6 @@ struct PushConstantData
     DRIP_ALIGNED_MEMBERS((glm::vec3, translation), (glm::vec3, scale), (glm::vec3, rotation))
 };
 
-// Compile-time tests for PushConstantData
 static_assert(PushConstantData::alignment() == 16, "PushConstantData alignment must be 16 bytes");
 static_assert(offsetof(PushConstantData, translation) % 16 == 0, "translation must be 16-byte aligned");
 static_assert(offsetof(PushConstantData, scale) % 16 == 0, "scale must be 16-byte aligned");
@@ -48,7 +50,7 @@ static_assert(sizeof(PushConstantData) % 16 == 0, "PushConstantData size must be
 
 }
 
-DefaultRenderSystem::DefaultRenderSystem(const Device& device, vk::RenderPass renderPass)
+MeshRenderSystem::MeshRenderSystem(const Device& device, const Renderer& renderer)
     : _device {device},
       _descriptorLayout {
           DescriptorSetLayout::Builder(_device)
@@ -57,19 +59,19 @@ DefaultRenderSystem::DefaultRenderSystem(const Device& device, vk::RenderPass re
               .addBinding(2, vk::DescriptorType::eCombinedImageSampler, vk::ShaderStageFlagBits::eFragment)
               .build(vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR)},
       _pipelineLayout {createPipelineLayout(_device, _descriptorLayout->getDescriptorSetLayout())},
-      _pipeline {createPipeline(_device, renderPass, _pipelineLayout)}
+      _pipeline {createPipeline(_device, renderer.getSwapChainRenderPass(), _pipelineLayout)}
 
 {
 }
 
-DefaultRenderSystem::~DefaultRenderSystem() noexcept
+MeshRenderSystem::~MeshRenderSystem() noexcept
 {
     _device.logicalDevice.destroyPipelineLayout(_pipelineLayout);
 }
 
-auto DefaultRenderSystem::createPipeline(const Device& device,
-                                         vk::RenderPass renderPass,
-                                         vk::PipelineLayout pipelineLayout) -> std::unique_ptr<Pipeline>
+auto MeshRenderSystem::createPipeline(const Device& device,
+                                      vk::RenderPass renderPass,
+                                      vk::PipelineLayout pipelineLayout) -> std::unique_ptr<Pipeline>
 {
     static constexpr auto inputAssemblyInfo =
         vk::PipelineInputAssemblyStateCreateInfo {.topology = vk::PrimitiveTopology::eTriangleList,
@@ -132,7 +134,7 @@ auto DefaultRenderSystem::createPipeline(const Device& device,
                         .subpass = 0});
 }
 
-auto DefaultRenderSystem::createPipelineLayout(const Device& device, vk::DescriptorSetLayout setLayout)
+auto MeshRenderSystem::createPipelineLayout(const Device& device, vk::DescriptorSetLayout setLayout)
     -> vk::PipelineLayout
 {
     static constexpr auto pushConstantData = vk::PushConstantRange {.stageFlags = vk::ShaderStageFlagBits::eVertex,
@@ -148,18 +150,19 @@ auto DefaultRenderSystem::createPipelineLayout(const Device& device, vk::Descrip
                           "Can't create pipeline layout");
 }
 
-void DefaultRenderSystem::render(const FrameInfo& frameInfo) const
+void MeshRenderSystem::render(const FrameInfo& frameInfo) const
 {
     frameInfo.commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline->getHandle());
 
-    for (const auto& object : frameInfo.scene.getObjects())
+    for (const auto& object : frameInfo.scene.getRenderables() | std::ranges::views::filter([](const auto& renderable) {
+                                  return renderable->getType() == Renderable::Type::Mesh;
+                              }))
     {
-        renderObject(*object, frameInfo);
+        renderObject(dynamic_cast<const MeshRenderable&>(*object), frameInfo);
     }
-    renderObject(frameInfo.scene.getDomain(), frameInfo);
 }
 
-void DefaultRenderSystem::renderObject(const Object& object, const FrameInfo& frameInfo) const
+void MeshRenderSystem::renderObject(const MeshRenderable& object, const FrameInfo& frameInfo) const
 {
     const auto push = PushConstantData {.translation = object.transform.translation,
                                         .scale = object.transform.scale,

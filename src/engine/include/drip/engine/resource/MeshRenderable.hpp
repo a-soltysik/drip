@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 
+#include "Renderable.hpp"
 #include "Surface.hpp"
 
 namespace drip::engine::gfx
@@ -24,33 +25,21 @@ struct Transform
 class Scene;
 class Context;
 
-class Object
+class MeshRenderable : public Renderable
 {
 public:
-    using Id = size_t;
+    explicit MeshRenderable(std::string name);
 
-    static auto getNextId() -> Id;
-
-    explicit Object(std::string name);
-    Object(const Object&) = delete;
-    Object(Object&&) = delete;
-    auto operator=(const Object&) = delete;
-    auto operator=(Object&&) = delete;
-
-    ~Object() noexcept = default;
-
-    [[nodiscard]] auto getId() const noexcept -> Id;
-    [[nodiscard]] auto getName() const noexcept -> const std::string&;
+    [[nodiscard]] auto getName() const -> std::string_view override;
+    [[nodiscard]] auto getType() const -> Type override;
     void addSurface(const Surface& surface);
     [[nodiscard]] auto getSurfaces() const noexcept -> const std::vector<Surface>&;
 
     Transform transform;
 
 private:
-    inline static Id currentId = 0;
     std::vector<Surface> surfaces;
     std::string _name;
-    Id _id;
 };
 
 }

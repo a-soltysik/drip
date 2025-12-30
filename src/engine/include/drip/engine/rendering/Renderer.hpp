@@ -9,7 +9,7 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
-#include "drip/engine/resource/Object.hpp"
+#include "drip/engine/resource/MeshRenderable.hpp"
 
 namespace drip::engine
 {
@@ -50,7 +50,7 @@ private:
     const Device& _device;
     std::unique_ptr<SwapChain> _swapChain;
     std::vector<vk::CommandBuffer> _commandBuffers;
-    std::vector<Object> _objects;
+    std::vector<MeshRenderable> _objects;
 
     uint32_t _currentImageIndex = 0;
     uint32_t _currentFrameIndex = 0;

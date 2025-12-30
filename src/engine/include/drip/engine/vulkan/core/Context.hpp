@@ -32,7 +32,7 @@ class Mesh;
 class Texture;
 class BoundaryParticleRenderSystem;
 class FluidParticleRenderSystem;
-class DefaultRenderSystem;
+class MeshRenderSystem;
 
 class Context
 {
@@ -51,6 +51,16 @@ public:
     void registerTexture(std::unique_ptr<Texture> texture);
     void registerMesh(std::unique_ptr<Mesh> mesh);
     [[nodiscard]] auto getAspectRatio() const noexcept -> float;
+    [[nodiscard]] auto getRenderer() const noexcept -> const Renderer&;
+
+    template <typename SystemType, typename... Args>
+    auto addRenderSystem(Args&&... args) -> SystemType&
+    {
+        auto system = std::make_unique<SystemType>(std::forward<Args>(args)...);
+        auto* ptr = system.get();
+        _renderSystems.push_back(std::move(system));
+        return *ptr;
+    }
 
 private:
     struct InstanceDeleter

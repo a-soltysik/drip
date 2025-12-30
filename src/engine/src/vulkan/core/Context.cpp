@@ -30,6 +30,7 @@
 
 #include "drip/engine/Window.hpp"
 #include "drip/engine/internal/config.hpp"
+#include "drip/engine/rendering/Renderer.hpp"
 #include "drip/engine/resource/Mesh.hpp"
 #include "drip/engine/resource/Texture.hpp"
 #include "drip/engine/scene/Camera.hpp"
@@ -37,7 +38,6 @@
 #include "drip/engine/utils/Signals.hpp"
 #include "drip/engine/utils/format/ResultFormatter.hpp"  // NOLINT(misc-include-cleaner)
 #include "rendering/FrameInfo.hpp"
-#include "rendering/Renderer.hpp"
 #include "rendering/UboLight.hpp"
 #include "vulkan/core/Device.hpp"
 #include "vulkan/memory/Buffer.hpp"
@@ -406,6 +406,11 @@ void Context::registerMesh(std::unique_ptr<Mesh> mesh)
 auto Context::getAspectRatio() const noexcept -> float
 {
     return _renderer->getAspectRatio();
+}
+
+auto Context::getRenderer() const noexcept -> const Renderer&
+{
+    return *_renderer;
 }
 
 void Context::registerTexture(std::unique_ptr<Texture> texture)
