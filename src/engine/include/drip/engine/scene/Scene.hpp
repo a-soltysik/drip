@@ -39,7 +39,7 @@ public:
                                                                               std::reference_wrapper<SpotLight>,
                                                                               std::monostate>;
 
-    auto addLight(std::variant<DirectionalLight, PointLight, SpotLight> light) -> bool;
+    auto addLight(std::variant<DirectionalLight, PointLight, SpotLight> lightVariant) -> bool;
 
 private:
     auto isNameUsed(std::string_view name) const -> bool;

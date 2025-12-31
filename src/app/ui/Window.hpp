@@ -6,7 +6,11 @@
 #include <drip/engine/Window.hpp>
 #include <drip/engine/utils/Signals.hpp>
 #include <glm/ext/vector_uint2.hpp>
+#include <memory>
 #include <vector>
+
+#include "input/KeyboardHandler.hpp"
+#include "input/MouseHandler.hpp"
 
 namespace drip::app
 {
@@ -32,10 +36,19 @@ public:
     auto processInput() -> void override;
     auto waitForInput() -> void override;
 
+    auto setKeyCallback(GLFWkeyfun callback) const noexcept -> GLFWkeyfun;
+    auto setMouseButtonCallback(GLFWmousebuttonfun callback) const noexcept -> GLFWmousebuttonfun;
+    auto setCursorPositionCallback(GLFWcursorposfun callback) const noexcept -> GLFWcursorposfun;
+
+    [[nodiscard]] auto getKeyboardHandler() const noexcept -> const KeyboardHandler&;
+    [[nodiscard]] auto getMouseHandler() const noexcept -> const MouseHandler&;
+
 private:
     [[nodiscard]] static auto createWindow(glm::uvec2 size, const char* name) -> GLFWwindow*;
     auto setupImGui() const -> void;
 
+    std::unique_ptr<KeyboardHandler> _keyboardHandler;
+    std::unique_ptr<MouseHandler> _mouseHandler;
     engine::signal::FrameBufferResized::ReceiverT _frameBufferResizedReceiver;
     GLFWwindow* _window;
     glm::uvec2 _size;

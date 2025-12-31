@@ -6,8 +6,14 @@ target_sources(
         App.cpp
         main.cpp
         SystemSignalHandler.cpp
-        Window.cpp
-        mesh/InvertedCube.cpp)
+        input/KeyboardHandler.cpp
+        input/MouseHandler.cpp
+        mesh/InvertedCube.cpp
+        ui/CameraHandler.cpp
+        ui/MovementHandler.cpp
+        ui/RotationHandler.cpp
+        ui/Window.cpp
+        utils/FrameTimeManager.cpp)
 
 target_link_libraries(
         drip
@@ -24,9 +30,11 @@ target_link_system_libraries(
         drip::common
 
         glfw
-        glm
+        glm::glm
         imgui
         Vulkan::Vulkan)
+
+target_include_directories(drip PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
 set_target_properties(
         drip

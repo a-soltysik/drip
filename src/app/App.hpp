@@ -3,6 +3,8 @@
 #include <drip/engine/scene/Scene.hpp>
 #include <drip/engine/vulkan/core/Context.hpp>
 
+#include "ui/CameraHandler.hpp"
+
 namespace drip::app
 {
 class App
@@ -17,5 +19,6 @@ private:
     std::unique_ptr<engine::gfx::Scene> _scene;
     std::unique_ptr<engine::Window> _window;
     std::unique_ptr<engine::gfx::Context> _api;
+    std::unique_ptr<CameraHandler> _cameraHandler;
 };
 }
