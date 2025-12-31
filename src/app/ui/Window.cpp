@@ -13,9 +13,13 @@
 #include <drip/engine/Window.hpp>
 #include <drip/engine/utils/Signals.hpp>
 #include <glm/ext/vector_uint2.hpp>
+#include <memory>
 #include <span>
 #include <utility>
 #include <vector>
+
+#include "input/KeyboardHandler.hpp"
+#include "input/MouseHandler.hpp"
 
 namespace
 {
@@ -38,6 +42,8 @@ Window::Window(const glm::uvec2 size, const char* name)
     : _window {createWindow(size, name)},
       _size {size}
 {
+    _keyboardHandler = std::make_unique<KeyboardHandler>(*this);
+    _mouseHandler = std::make_unique<MouseHandler>(*this);
     glfwSetFramebufferSizeCallback(_window, framebufferResizeCallback);
 
     _frameBufferResizedReceiver = engine::signal::frameBufferResized.connect([this](auto data) {
@@ -52,9 +58,11 @@ Window::Window(const glm::uvec2 size, const char* name)
 }
 
 Window::Window(Window&& rhs) noexcept
-    : _frameBufferResizedReceiver {std::move(rhs._frameBufferResizedReceiver)},
-      _window {nullptr},
-      _size {rhs._size}
+    : _keyboardHandler {std::move(rhs._keyboardHandler)},
+      _mouseHandler {std::move(rhs._mouseHandler)},
+      _frameBufferResizedReceiver {std::move(rhs._frameBufferResizedReceiver)},
+      _window {std::exchange(rhs._window, nullptr)},
+      _size {std::exchange(rhs._size, {})}
 {
 }
 
@@ -150,6 +158,31 @@ auto Window::setupImGui() const -> void
 {
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForVulkan(_window, true);
+}
+
+auto Window::setKeyCallback(GLFWkeyfun callback) const noexcept -> GLFWkeyfun
+{
+    return glfwSetKeyCallback(_window, callback);
+}
+
+auto Window::setMouseButtonCallback(GLFWmousebuttonfun callback) const noexcept -> GLFWmousebuttonfun
+{
+    return glfwSetMouseButtonCallback(_window, callback);
+}
+
+auto Window::setCursorPositionCallback(GLFWcursorposfun callback) const noexcept -> GLFWcursorposfun
+{
+    return glfwSetCursorPosCallback(_window, callback);
+}
+
+auto Window::getKeyboardHandler() const noexcept -> const KeyboardHandler&
+{
+    return *_keyboardHandler;
+}
+
+auto Window::getMouseHandler() const noexcept -> const MouseHandler&
+{
+    return *_mouseHandler;
 }
 
 }

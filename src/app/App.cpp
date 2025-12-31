@@ -16,13 +16,14 @@
 #include <drip/engine/utils/Signals.hpp>
 #include <drip/engine/vulkan/core/Context.hpp>
 #include <glm/ext/vector_uint2.hpp>
-#include <glm/trigonometric.hpp>
 #include <memory>
 #include <utility>
 
 #include "SystemSignalHandler.hpp"
-#include "Window.hpp"
 #include "mesh/InvertedCube.hpp"
+#include "ui/CameraHandler.hpp"
+#include "ui/Window.hpp"
+#include "utils/FrameTimeManager.hpp"
 
 namespace drip::app
 {
@@ -47,6 +48,13 @@ void App::run()
     _window = std::make_unique<Window>(glm::uvec2 {1280, 720}, "drip::app");
     _api = std::make_unique<engine::gfx::Context>(*_window);
     _scene = std::make_unique<engine::gfx::Scene>();
+    _cameraHandler = std::make_unique<CameraHandler>(dynamic_cast<Window&>(*_window),
+                                                     _scene->getCamera(),
+                                                     CameraHandler::Config {
+                                                         .rotationSpeed = 500.F,
+                                                         .moveSpeed = 2.5F
+    },
+                                                     engine::gfx::Transform {.translation = {0, 0.5F, -5}});
 
     _api->addRenderSystem<engine::gfx::MeshRenderSystem>(_api->getDevice(), _api->getRenderer());
     initializeDefaultScene();
@@ -59,11 +67,6 @@ void App::initializeDefaultScene() const
     auto invertedCubeMesh = mesh::inverted_cube::create(*_api, "InvertedCube");
     auto invertedCubeRenderable = std::make_unique<engine::gfx::MeshRenderable>("InvertedCube");
     invertedCubeRenderable->addSurface(engine::gfx::Surface {blueTexture.get(), invertedCubeMesh.get()});
-    invertedCubeRenderable->transform = engine::gfx::Transform {
-        .translation = {},
-        .scale = {1, 1, 1},
-        .rotation = {},
-    };
 
     _scene->addRenderable(std::move(invertedCubeRenderable));
 
@@ -86,6 +89,8 @@ void App::initializeDefaultScene() const
 
 void App::mainLoop() const
 {
+    auto timeManager = FrameTimeManager {};
+
     while (!_window->shouldClose()) [[likely]]
     {
         if (!_window->isMinimized()) [[likely]]
@@ -93,11 +98,9 @@ void App::mainLoop() const
             engine::signal::gameLoopIterationStarted.registerSender()();
             _window->processInput();
 
-            _scene->getCamera().setPerspectiveProjection(
-                engine::gfx::projection::Perspective {.fovY = glm::radians(50.F),
-                                                      .aspect = _api->getAspectRatio(),
-                                                      .zNear = 0.1F,
-                                                      .zFar = 100});
+            timeManager.update();
+
+            _cameraHandler->update(timeManager.getDelta(), _api->getAspectRatio());
 
             _api->makeFrame(*_scene);
         }
