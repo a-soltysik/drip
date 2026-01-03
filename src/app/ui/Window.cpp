@@ -86,7 +86,7 @@ auto Window::createWindow(glm::uvec2 size, const char* name) -> GLFWwindow*
         common::log::Error("GLFW Error {}: {}", error, description);
     });
 
-    common::expect(glfwInit(), GLFW_TRUE, "Failed to initialize GLFW");
+    common::Expect(glfwInit(), GLFW_TRUE, "Failed to initialize GLFW");
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
@@ -101,7 +101,10 @@ auto Window::getRequiredExtensions() const -> std::vector<const char*>
     auto glfwExtensionsCount = uint32_t {};
     const auto* glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionsCount);
 
-    if (!common::shouldNotBe(glfwExtensions, nullptr, "No extension allowing surface creation was found"))
+    if (!common::ShouldNotBe(glfwExtensions,
+                             static_cast<const char**>(nullptr),
+                             "No extension allowing surface creation was found")
+             .result())
     {
         return {};
     }
@@ -116,7 +119,7 @@ auto Window::createSurface(VkInstance instance) const -> VkSurfaceKHR
     auto* newSurface = VkSurfaceKHR {};
     glfwCreateWindowSurface(instance, _window, nullptr, &newSurface);
 
-    return common::expectNot(newSurface, nullptr, "Unable to create surface");
+    return common::ExpectNot(newSurface, static_cast<VkSurfaceKHR>(nullptr), "Unable to create surface").result();
 }
 
 auto Window::shouldClose() const -> bool

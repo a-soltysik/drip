@@ -5,7 +5,6 @@
 #include "drip/engine/vulkan/core/Context.hpp"
 
 #include <backends/imgui_impl_vulkan.h>
-#include <fmt/format.h>
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_core.h>
 
@@ -84,9 +83,7 @@ VKAPI_ATTR auto VKAPI_CALL debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEX
 
 auto imGuiCallback(VkResult result)
 {
-    common::shouldBe(vk::Result {result},
-                     vk::Result::eSuccess,
-                     fmt::format("ImGui didn't succeed: ", vk::Result {result}));
+    common::ShouldBe(vk::Result {result}, vk::Result::eSuccess, "ImGui didn't succeed: {}", vk::Result {result});
 }
 
 }
@@ -141,7 +138,7 @@ Context::~Context() noexcept
 {
     common::log::Info("Starting closing Vulkan API");
 
-    common::shouldBe(_device->logicalDevice.waitIdle(), vk::Result::eSuccess, "Wait idle didn't succeed");
+    common::ShouldBe(_device->logicalDevice.waitIdle(), vk::Result::eSuccess, "Wait idle didn't succeed");
 
     ImGui_ImplVulkan_Shutdown();
 
@@ -168,7 +165,7 @@ auto Context::createInstance(const Window& window) -> std::unique_ptr<vk::Instan
 
     const auto requiredExtensions = getRequiredExtensions(window);
 
-    common::expect(areRequiredExtensionsAvailable(requiredExtensions), true, "There are missing extensions");
+    common::Expect(areRequiredExtensionsAvailable(requiredExtensions), true, "There are missing extensions");
 
     auto createInfo = vk::InstanceCreateInfo {.pApplicationInfo = &appInfo,
                                               .enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size()),
@@ -176,13 +173,14 @@ auto Context::createInstance(const Window& window) -> std::unique_ptr<vk::Instan
 
     if constexpr (shouldEnableValidationLayers())
     {
-        common::shouldBe(enableValidationLayers(createInfo), true, "Unable to enable validation layers");
+        common::ShouldBe(enableValidationLayers(createInfo), true, "Unable to enable validation layers");
         createInfo.pNext = &debugMessengerCreateInfo;
     }
 
     auto instance = std::unique_ptr<vk::Instance, InstanceDeleter> {
         new vk::Instance {
-            common::expect(vk::createInstance(createInfo), vk::Result::eSuccess, "Creating instance didn't succeed")},
+            common::Expect(vk::createInstance(createInfo), vk::Result::eSuccess, "Creating instance didn't succeed")
+                .result()},
         InstanceDeleter {_surface}};
     VULKAN_HPP_DEFAULT_DISPATCHER.init(*instance);
     return instance;
@@ -244,9 +242,10 @@ auto Context::createDebugMessanger(vk::Instance instance) -> std::optional<vk::D
 {
     if constexpr (shouldEnableValidationLayers())
     {
-        const auto debugMessenger = common::expect(instance.createDebugUtilsMessengerEXT(debugMessengerCreateInfo),
+        const auto debugMessenger = common::Expect(instance.createDebugUtilsMessengerEXT(debugMessengerCreateInfo),
                                                    vk::Result::eSuccess,
-                                                   "Unable to create debug messenger");
+                                                   "Unable to create debug messenger")
+                                        .result();
         common::log::Info("Debug messenger is created");
         return debugMessenger;
     }

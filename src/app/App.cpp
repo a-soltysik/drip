@@ -2,6 +2,7 @@
 
 #include <fmt/base.h>
 
+#include <array>
 #include <boost/exception/detail/exception_ptr.hpp>
 #include <chrono>
 #include <drip/common/log/LogMessageBuilder.hpp>
@@ -35,7 +36,10 @@ void App::run()
     common::log::Logger::instance().addSink<common::log::ConsoleSink>();
     common::log::Logger::instance().addSink<common::log::FileSink>();
     common::log::Logger::instance().setAutoFlush(true, std::chrono::seconds {5});
-    common::log::Logger::instance().setFlushOnLevel(common::log::Level::Error);
+    common::log::Logger::instance().setLevels(std::array {common::log::Logger::Level::Info,
+                                                          common::log::Logger::Level::Warning,
+                                                          common::log::Logger::Level::Error});
+    common::log::Logger::instance().setFlushOnLevel(common::log::Logger::Level::Error);
     common::log::Logger::instance().setExceptionHandler([](const boost::exception_ptr& ex) {
         fmt::println("{}",
                      common::log::Error("Logger exception!")

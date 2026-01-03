@@ -14,7 +14,6 @@
 #include <string_view>
 #include <utility>
 
-#include "drip/common/log/LogMessageBuilder.hpp"
 #include "drip/common/log/sink/LogSink.hpp"
 #include "drip/common/utils/Timer.hpp"
 
@@ -105,6 +104,11 @@ auto Logger::isRunning() const -> bool
     return _isRunning.load();
 }
 
+auto Logger::shouldLog(Level level) const -> bool
+{
+    return _isRunning.load() && _levels.contains(level);
+}
+
 void Logger::removeSink(SinkId sinkId)
 {
     auto sinks = _sinks.synchronize();
@@ -179,10 +183,11 @@ auto findStartOfFunctionName(std::string_view function) -> size_t
 
 }
 
-auto fmt::formatter<drip::common::log::Logger::Entry>::getLevelTag(drip::common::log::Level level) -> std::string_view
+auto fmt::formatter<drip::common::log::Logger::Entry>::getLevelTag(drip::common::log::Logger::Level level)
+    -> std::string_view
 {
     using namespace std::string_view_literals;
-    using enum drip::common::log::Level;
+    using enum drip::common::log::Logger::Level;
     switch (level)
     {
     case Debug:

@@ -1,7 +1,6 @@
 #include "KeyboardHandler.hpp"
 
 #include <GLFW/glfw3.h>
-#include <fmt/format.h>
 #include <imgui.h>
 
 #include <cstddef>
@@ -62,12 +61,13 @@ KeyboardHandler::KeyboardHandler(const Window& window)
 
 auto KeyboardHandler::getKeyState(int key) const -> State
 {
-    common::expect(
+    common::Expect(
         key,
         [this](auto userKey) {
             return userKey < static_cast<int>(_states.size()) && userKey >= 0;
         },
-        fmt::format("Key: {} is beyond the size of array", key));
+        "Key: {} is beyond the size of array",
+        key);
 
     return _states[static_cast<size_t>(key)];
 }
@@ -80,7 +80,7 @@ void KeyboardHandler::handleKeyboardState(const signal::KeyboardStateChangedData
     }
 
     if (const auto isCorrectKey = data.key >= 0 && std::cmp_less(data.key, _states.size());
-        !common::shouldBe(isCorrectKey, fmt::format("Key: {} is beyond the size of array", data.key)))
+        !common::ShouldBe(isCorrectKey, "Key: {} is beyond the size of array", data.key).result())
     {
         return;
     }

@@ -17,10 +17,14 @@
 namespace drip::common::log::detail
 {
 
-LogMessageBuilder::LogMessageBuilder(std::string message, const std::source_location& location, Level level)
+LogMessageBuilder::LogMessageBuilder(std::string message,
+                                     const std::source_location& location,
+                                     Logger::Level level,
+                                     bool enabled)
     : _message(std::move(message)),
       _location(location),
-      _level(level)
+      _level(level),
+      _enabled(enabled)
 {
 }
 
@@ -34,13 +38,19 @@ LogMessageBuilder::~LogMessageBuilder()
 
 auto LogMessageBuilder::withCurrentException(boost::exception_ptr exception) -> LogMessageBuilder&
 {
-    _message += fmt::format("\n{}", exception);
+    if (_enabled)
+    {
+        _message += fmt::format("\n{}", exception);
+    }
     return *this;
 }
 
 auto LogMessageBuilder::withStacktrace(boost::stacktrace::stacktrace stacktrace) -> LogMessageBuilder&
 {
-    _message += fmt::format("\n{}", stacktrace);
+    if (_enabled)
+    {
+        _message += fmt::format("\n{}", stacktrace);
+    }
     return *this;
 }
 
@@ -58,6 +68,11 @@ auto LogMessageBuilder::asString() -> std::string
 
 void LogMessageBuilder::log() noexcept
 {
+    if (!_enabled)
+    {
+        return;
+    }
+
     try
     {
         Logger::instance().log(_level, std::move(_message), _location);

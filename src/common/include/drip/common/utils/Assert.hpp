@@ -10,12 +10,13 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <variant>
 
 #include "drip/common/log/LogMessageBuilder.hpp"
+#include "drip/common/log/Logger.hpp"
 
 namespace drip::common
 {
-
 template <typename T>
 concept Result = requires(T result) {
     { result.value };
@@ -37,210 +38,617 @@ struct ResultHelper
 [[noreturn]] inline auto panic(std::string_view message,
                                std::source_location location = std::source_location::current()) noexcept
 {
-    log::detail::LogMessageBuilder {fmt::format("Terminal error: {}", message), location, log::Level::Error};
+    log::detail::LogMessageBuilder {fmt::format("Terminal error: {}", message),
+                                    location,
+                                    log::Logger::Level::Error,
+                                    log::Logger::instance().shouldLog(log::Logger::Level::Error)};
     panic();
 }
 
-template <typename T>
-auto expect(T&& result,
-            const std::equality_comparable_with<T> auto& expected,
-            std::string_view message,
-            std::source_location location = std::source_location::current()) noexcept -> T
+namespace detail
 {
-    if (result != expected) [[unlikely]]
+
+template <typename... Args, typename T>
+requires fmt::is_formattable<std::decay_t<T>>::value
+auto formatMessageWithValue(std::string_view format, const T& value, Args&&... args) -> std::string
+{
+    return fmt::format("{}: {}", fmt::format(fmt::runtime(format), std::forward<Args>(args)...), value);
+}
+
+template <typename... Args>
+auto formatMessageWithoutValue(std::string_view format, Args&&... args) -> std::string
+{
+    return fmt::format(fmt::runtime(format), std::forward<Args>(args)...);
+}
+
+template <typename T, typename... Args>
+auto formatMessage(std::string_view format, const T* value, Args&&... args) -> std::string
+{
+    if constexpr (fmt::is_formattable<std::decay_t<T>>::value)
     {
-        if constexpr (fmt::is_formattable<std::decay_t<T>>() || std::is_enum<std::decay_t<T>>())
+        if (value != nullptr)
         {
-            panic(fmt::format("{}: {}", message, result), location);
-        }
-        else
-        {
-            panic(message, location);
+            return formatMessageWithValue(format, *value, std::forward<Args>(args)...);
         }
     }
-    return std::forward<T>(result);
+    return formatMessageWithoutValue(format, std::forward<Args>(args)...);
 }
+
+template <typename T, typename... Args>
+void logMessage(
+    log::Logger::Level level, std::string_view format, const T* value, std::source_location location, Args&&... args)
+{
+    log::detail::LogMessageBuilder {formatMessage(format, value, std::forward<Args>(args)...),
+                                    location,
+                                    level,
+                                    log::Logger::instance().shouldLog(level)};
+}
+
+template <typename T>
+struct ValueTypeResolver
+{
+    using type = T;
+};
 
 template <Result T>
-auto expect(T&& result,
-            const typename ResultHelper<T>::Error& expected,
-            std::string_view message,
-            std::source_location location = std::source_location::current()) noexcept
-    -> ResultHelper<std::remove_reference_t<T>>::Ok
+struct ValueTypeResolver<T>
 {
-    if (result.result != expected) [[unlikely]]
-    {
-        panic(fmt::format("{}: {}", message, result.result), location);
-    }
-    return std::forward<T>(result).value;
-}
+    using type = ResultHelper<T>::Ok;
+};
 
 template <typename T>
-auto expect(T&& value,
+struct ValueTypeResolver<std::optional<T>>
+{
+    using type = T;
+};
+
+template <typename T>
+using ValueTypeT = ValueTypeResolver<std::decay_t<T>>::type;
+
+}
+
+template <typename T, typename... Args>
+class Expect
+{
+public:
+    using ValueType = detail::ValueTypeT<T>;
+
+    template <typename U = T>
+    Expect(U&& result,
+           const std::equality_comparable_with<T> auto& expected,
+           std::string_view format,
+           Args&&... args,
+           std::source_location location = std::source_location::current()) noexcept
+        : _result(getResult(std::forward<U>(result), expected, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    Expect(U&& result,
+           const ResultHelper<U>::Error& expected,
+           std::string_view format,
+           Args&&... args,
+           std::source_location location = std::source_location::current()) noexcept
+        : _result(getResult(std::forward<U>(result), expected, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    Expect(U&& result,
+           std::invocable<const std::remove_reference_t<U>&> auto predicate,
+           std::string_view format,
+           Args&&... args,
+           std::source_location location = std::source_location::current()) noexcept
+        : _result(getResult(std::forward<U>(result), predicate, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    requires(std::convertible_to<U, bool>)
+    Expect(U&& result,
+           std::string_view format,
+           Args&&... args,
+           std::source_location location = std::source_location::current()) noexcept
+        : _result(getResult(std::forward<U>(result), location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    Expect(std::optional<U>&& result,
+           std::string_view format,
+           Args&&... args,
+           std::source_location location = std::source_location::current()) noexcept
+        : _result(getResult(std::move(result), location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    [[nodiscard]] auto result() && noexcept -> ValueType
+    {
+        return std::move(_result);
+    }
+
+    auto result() const& = delete;
+
+private:
+    template <typename U = T>
+    auto getResult(U&& result,
+                   const std::equality_comparable_with<T> auto& expected,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) -> ValueType
+    {
+        if (result != expected) [[unlikely]]
+        {
+            panic(detail::formatMessage(format, &result, std::forward<Args>(args)...), location);
+        }
+        return std::forward<U>(result);
+    }
+
+    template <typename U = T>
+    auto getResult(U&& result,
+                   const ResultHelper<U>::Error& expected,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> ValueType
+    {
+        if (result.result != expected) [[unlikely]]
+        {
+            panic(detail::formatMessage(format, &result.result, std::forward<Args>(args)...), location);
+        }
+        return std::forward<U>(result).value;
+    }
+
+    template <typename U = T>
+    auto getResult(U&& result,
+                   std::invocable<const std::remove_reference_t<U>&> auto predicate,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> ValueType
+    {
+        if (!predicate(result)) [[unlikely]]
+        {
+            panic(detail::formatMessage(format, static_cast<const void*>(nullptr), std::forward<Args>(args)...),
+                  location);
+        }
+        return std::forward<T>(result);
+    }
+
+    template <typename U = T>
+    requires(std::convertible_to<U, bool>)
+    auto getResult(U&& result, std::source_location location, std::string_view format, Args&&... args) noexcept
+        -> ValueType
+    {
+        if (!result) [[unlikely]]
+        {
+            panic(detail::formatMessage(format, static_cast<const void*>(nullptr), std::forward<Args>(args)...),
+                  location);
+        }
+
+        return std::forward<U>(result);
+    }
+
+    template <typename U = T>
+    auto getResult(std::optional<U>&& result,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> ValueType
+    {
+        if (!result.has_value()) [[unlikely]]
+        {
+            panic(detail::formatMessage(format, static_cast<const void*>(nullptr), std::forward<Args>(args)...),
+                  location);
+        }
+        return std::move(result).value();
+    }
+
+    ValueType _result;
+};
+
+template <typename T, typename... Args>
+Expect(T&& result, const std::equality_comparable_with<T> auto& expected, std::string_view format, Args&&... args)
+    -> Expect<T, Args...>;
+
+template <typename T, typename... Args>
+Expect(T&& result, const typename ResultHelper<T>::Error& expected, std::string_view format, Args&&... args)
+    -> Expect<T, Args...>;
+
+template <typename T, typename... Args>
+Expect(T&& result,
+       std::invocable<const std::remove_reference_t<T>&> auto predicate,
+       std::string_view format,
+       Args&&... args) -> Expect<T, Args...>;
+
+template <typename T, typename... Args>
+Expect(T&& result, std::string_view format, Args&&... args) -> Expect<T, Args...>;
+
+template <typename T, typename... Args>
+class ExpectNot
+{
+public:
+    using ValueType = detail::ValueTypeT<T>;
+
+    template <typename U = T>
+    requires(std::convertible_to<U, bool>)
+    ExpectNot(U&& result,
+              std::string_view format,
+              Args&&... args,
+              std::source_location location = std::source_location::current()) noexcept
+        : _result(getResult(std::forward<U>(result), location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    ExpectNot(U&& result,
+              const std::equality_comparable_with<T> auto& notExpected,
+              std::string_view format,
+              Args&&... args,
+              std::source_location location = std::source_location::current()) noexcept
+        : _result(getResult(std::forward<U>(result), notExpected, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    ExpectNot(U&& result,
+              const ResultHelper<U>::Error& notExpected,
+              std::string_view format,
+              Args&&... args,
+              std::source_location location = std::source_location::current()) noexcept
+        : _result(getResult(std::forward<U>(result), notExpected, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    ExpectNot(U&& result,
+              std::invocable<const std::remove_reference_t<U>&> auto predicate,
+              std::string_view format,
+              Args&&... args,
+              std::source_location location = std::source_location::current()) noexcept
+        : _result(getResult(std::forward<U>(result), predicate, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    [[nodiscard]] auto result() && noexcept -> ValueType
+    {
+        return std::move(_result);
+    }
+
+    auto result() const& = delete;
+
+private:
+    template <typename U = T>
+    requires(std::convertible_to<U, bool>)
+    auto getResult(U&& result, std::source_location location, std::string_view format, Args&&... args) noexcept
+        -> ValueType
+    {
+        if (result) [[unlikely]]
+        {
+            panic(detail::formatMessage(format, static_cast<const void*>(nullptr), std::forward<Args>(args)...),
+                  location);
+        }
+        return std::forward<U>(result);
+    }
+
+    template <typename U = T>
+    auto getResult(U&& result,
+                   const std::equality_comparable_with<T> auto& notExpected,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> ValueType
+    {
+        if (result == notExpected) [[unlikely]]
+        {
+            panic(detail::formatMessage(format, &result, std::forward<Args>(args)...), location);
+        }
+        return std::forward<U>(result);
+    }
+
+    template <typename U = T>
+    auto getResult(U&& result,
+                   const ResultHelper<U>::Error& notExpected,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> ValueType
+    {
+        if (result.result == notExpected) [[unlikely]]
+        {
+            panic(detail::formatMessage(format, &result.result, std::forward<Args>(args)...), location);
+        }
+        return std::forward<U>(result).value;
+    }
+
+    template <typename U = T>
+    auto getResult(U&& result,
+                   std::invocable<const std::remove_reference_t<U>&> auto predicate,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> ValueType
+    {
+        if (predicate(result)) [[unlikely]]
+        {
+            panic(detail::formatMessage(format, static_cast<const void*>(nullptr), std::forward<Args>(args)...),
+                  location);
+        }
+        return std::forward<U>(result);
+    }
+
+    ValueType _result;
+};
+
+template <typename T, typename... Args>
+ExpectNot(T&& result, std::string_view format, Args&&... args) -> ExpectNot<T, Args...>;
+
+template <typename T, typename... Args>
+ExpectNot(T&& result, const std::equality_comparable_with<T> auto& notExpected, std::string_view format, Args&&... args)
+    -> ExpectNot<T, Args...>;
+
+template <typename T, typename... Args>
+ExpectNot(T&& result, const typename ResultHelper<T>::Error& notExpected, std::string_view format, Args&&... args)
+    -> ExpectNot<T, Args...>;
+
+template <typename T, typename... Args>
+ExpectNot(T&& result,
+          std::invocable<const std::remove_reference_t<T>&> auto predicate,
+          std::string_view format,
+          Args&&... args) -> ExpectNot<T, Args...>;
+
+template <typename T, typename... Args>
+class ShouldBe
+{
+public:
+    template <typename U = T>
+    ShouldBe(const U& result,
+             const std::equality_comparable_with<T> auto& expected,
+             std::string_view format,
+             Args&&... args,
+             std::source_location location = std::source_location::current()) noexcept
+        : _success(getResult(result, expected, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    requires(std::convertible_to<U, bool>)
+    ShouldBe(U&& result,
+             std::string_view format,
+             Args&&... args,
+             std::source_location location = std::source_location::current()) noexcept
+        : _success(getResult(std::forward<U>(result), location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    ShouldBe(const U& value,
+             std::invocable<const std::remove_reference_t<U>&> auto predicate,
+             std::string_view format,
+             Args&&... args,
+             std::source_location location = std::source_location::current()) noexcept
+        : _success(getResult(value, predicate, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    [[nodiscard]] auto result() const noexcept -> bool
+    {
+        return _success;
+    }
+
+private:
+    template <typename U = T>
+    auto getResult(const U& result,
+                   const std::equality_comparable_with<T> auto& expected,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> bool
+    {
+        if (result != expected) [[unlikely]]
+        {
+            detail::logMessage(log::Logger::Level::Error, format, &result, location, std::forward<Args>(args)...);
+            return false;
+        }
+        return true;
+    }
+
+    template <typename U = T>
+    requires(std::convertible_to<U, bool>)
+    auto getResult(U&& result, std::source_location location, std::string_view format, Args&&... args) noexcept -> bool
+    {
+        if (!result) [[unlikely]]
+        {
+            detail::logMessage(log::Logger::Level::Warning,
+                               format,
+                               static_cast<const void*>(nullptr),
+                               location,
+                               std::forward<Args>(args)...);
+            return false;
+        }
+        return true;
+    }
+
+    template <typename U = T>
+    auto getResult(const U& value,
+                   std::invocable<const std::remove_reference_t<U>&> auto predicate,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> bool
+    {
+        if (!predicate(value)) [[unlikely]]
+        {
+            detail::logMessage(log::Logger::Level::Warning,
+                               format,
+                               static_cast<const void*>(nullptr),
+                               location,
+                               std::forward<Args>(args)...);
+            return false;
+        }
+        return true;
+    }
+
+    bool _success;
+};
+
+template <typename T, typename... Args>
+ShouldBe(const T& result,
+         const std::equality_comparable_with<T> auto& expected,
+         std::string_view format,
+         Args&&... args) -> ShouldBe<T, Args...>;
+
+template <typename T, typename... Args>
+ShouldBe(T&& result, std::string_view format, Args&&... args) -> ShouldBe<T, Args...>;
+
+template <typename T, typename... Args>
+ShouldBe(const T& value,
+         std::invocable<const std::remove_reference_t<T>&> auto predicate,
+         std::string_view format,
+         Args&&... args) -> ShouldBe<T, Args...>;
+
+template <typename T, typename... Args>
+class ShouldNotBe
+{
+public:
+    template <typename U = T>
+    requires(std::convertible_to<U, bool>)
+    ShouldNotBe(const U& result,
+                std::string_view format,
+                Args&&... args,
+                std::source_location location = std::source_location::current()) noexcept
+        : _success(getResult(std::forward<U>(result), location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    ShouldNotBe(const U& result,
+                const std::equality_comparable_with<T> auto& notExpected,
+                std::string_view format,
+                Args&&... args,
+                std::source_location location = std::source_location::current()) noexcept
+        : _success(getResult(result, notExpected, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    ShouldNotBe(const U& result,
+                const ResultHelper<U>::Error& notExpected,
+                std::string_view format,
+                Args&&... args,
+                std::source_location location = std::source_location::current()) noexcept
+        : _success(getResult(result, notExpected, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    template <typename U = T>
+    ShouldNotBe(const U& result,
+                std::invocable<const std::remove_reference_t<U>&> auto predicate,
+                std::string_view format,
+                Args&&... args,
+                std::source_location location = std::source_location::current()) noexcept
+        : _success(getResult(result, predicate, location, format, std::forward<Args>(args)...))
+    {
+    }
+
+    [[nodiscard]] auto result() const noexcept -> bool
+    {
+        return _success;
+    }
+
+private:
+    template <typename U = T>
+    requires(std::convertible_to<U, bool>)
+    auto getResult(const U& result, std::source_location location, std::string_view format, Args&&... args) noexcept
+        -> bool
+    {
+        if (result) [[unlikely]]
+        {
+            detail::logMessage(log::Logger::Level::Warning,
+                               format,
+                               static_cast<const void*>(nullptr),
+                               location,
+                               std::forward<Args>(args)...);
+            return false;
+        }
+        return true;
+    }
+
+    template <typename U = T>
+    auto getResult(const U& result,
+                   const std::equality_comparable_with<T> auto& notExpected,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> bool
+    {
+        if (result == notExpected) [[unlikely]]
+        {
+            detail::logMessage(log::Logger::Level::Warning, format, &result, location, std::forward<Args>(args)...);
+            return false;
+        }
+        return true;
+    }
+
+    template <typename U = T>
+    auto getResult(const U& result,
+                   const ResultHelper<U>::Error& notExpected,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> bool
+    {
+        if (result.result == notExpected) [[unlikely]]
+        {
+            detail::logMessage(log::Logger::Level::Warning,
+                               format,
+                               &result.result,
+                               location,
+                               std::forward<Args>(args)...);
+            return false;
+        }
+        return true;
+    }
+
+    template <typename U = T>
+    auto getResult(const U& result,
+                   std::invocable<const std::remove_reference_t<U>&> auto predicate,
+                   std::source_location location,
+                   std::string_view format,
+                   Args&&... args) noexcept -> bool
+    {
+        if (predicate(result)) [[unlikely]]
+        {
+            detail::logMessage(log::Logger::Level::Warning,
+                               format,
+                               static_cast<const void*>(nullptr),
+                               location,
+                               std::forward<Args>(args)...);
+            return false;
+        }
+        return true;
+    }
+
+    bool _success;
+};
+
+template <typename T, typename... Args>
+ShouldNotBe(const T& result, std::string_view format, Args&&... args) -> ShouldNotBe<T, Args...>;
+
+template <typename T, typename... Args>
+ShouldNotBe(const T& result,
+            const std::equality_comparable_with<T> auto& notExpected,
+            std::string_view format,
+            Args&&... args) -> ShouldNotBe<T, Args...>;
+
+template <typename T, typename... Args>
+ShouldNotBe(const T& result,
+            const typename ResultHelper<T>::Error& notExpected,
+            std::string_view format,
+            Args&&... args) -> ShouldNotBe<T, Args...>;
+
+template <typename T, typename... Args>
+ShouldNotBe(const T& result,
             std::invocable<const std::remove_reference_t<T>&> auto predicate,
-            std::string_view message,
-            std::source_location location = std::source_location::current()) noexcept -> T
-{
-    if (!predicate(value)) [[unlikely]]
-    {
-        panic(message, location);
-    }
-    return std::forward<T>(value);
-}
-
-void expect(std::convertible_to<bool> auto&& result,
-            std::string_view message,
-            std::source_location location = std::source_location::current()) noexcept
-{
-    if (!result) [[unlikely]]
-    {
-        panic(message, location);
-    }
-}
-
-void expectNot(std::convertible_to<bool> auto&& result,
-               std::string_view message,
-               std::source_location location = std::source_location::current()) noexcept
-{
-    if (result) [[unlikely]]
-    {
-        panic(message, location);
-    }
-}
-
-template <typename T>
-auto expectNot(T&& result,
-               const std::equality_comparable_with<T> auto& notExpected,
-               std::string_view message,
-               std::source_location location = std::source_location::current()) noexcept -> T
-{
-    if (result == notExpected) [[unlikely]]
-    {
-        if constexpr (fmt::is_formattable<std::decay_t<T>>() || std::is_enum<std::decay_t<T>>())
-        {
-            panic(fmt::format("{}: {}", message, result), location);
-        }
-        else
-        {
-            panic(message, location);
-        }
-    }
-    return std::forward<T>(result);
-}
-
-template <Result T>
-auto expectNot(T&& result,
-               const typename ResultHelper<T>::Error& notExpected,
-               std::string_view message,
-               std::source_location location = std::source_location::current()) noexcept
-    -> ResultHelper<std::remove_reference_t<T>>::Ok
-{
-    if (result.result == notExpected) [[unlikely]]
-    {
-        panic(fmt::format("{}: {}", message, result.result), location);
-    }
-    return std::forward<T>(result).value;
-}
-
-template <typename T>
-auto expectNot(T&& value,
-               std::invocable<const std::remove_reference_t<T>&> auto predicate,
-               std::string_view message,
-               std::source_location location = std::source_location::current()) noexcept -> T
-{
-    if (predicate(value)) [[unlikely]]
-    {
-        panic(message, location);
-    }
-    return std::forward<T>(value);
-}
-
-template <typename T>
-auto expect(std::optional<T> value,
-            std::string_view message,
-            std::source_location location = std::source_location::current()) noexcept -> T
-{
-    if (!value.has_value()) [[unlikely]]
-    {
-        panic(message, location);
-    }
-    return std::move(value).value();
-}
-
-template <typename T>
-auto shouldBe(const T& result,
-              const std::equality_comparable_with<T> auto& expected,
-              std::string_view message,
-              std::source_location location = std::source_location::current()) noexcept -> bool
-{
-    if (result != expected) [[unlikely]]
-    {
-        if constexpr (fmt::is_formattable<std::decay_t<T>>() || std::is_enum<std::decay_t<T>>())
-        {
-            log::detail::LogMessageBuilder {fmt::format("{}: {}", message, result), location, log::Level::Error};
-        }
-        else
-        {
-            log::detail::LogMessageBuilder {fmt::format("{}", message), location, log::Level::Error};
-        }
-        return false;
-    }
-    return true;
-}
-
-auto shouldBe(std::convertible_to<bool> auto&& result,
-              std::string_view message,
-              std::source_location location = std::source_location::current()) noexcept -> bool
-{
-    if (!result) [[unlikely]]
-    {
-        log::detail::LogMessageBuilder {fmt::format("{}", message), location, log::Level::Warning};
-        return false;
-    }
-    return true;
-}
-
-template <typename T>
-auto shouldBe(const T& value,
-              std::invocable<const std::remove_reference_t<T>&> auto predicate,
-              std::string_view message,
-              std::source_location location = std::source_location::current()) noexcept -> bool
-{
-    if (!predicate(value)) [[unlikely]]
-    {
-        log::detail::LogMessageBuilder {fmt::format("{}", message), location, log::Level::Warning};
-        return false;
-    }
-    return true;
-}
-
-template <typename T>
-auto shouldNotBe(const T& result,
-                 const std::equality_comparable_with<T> auto& notExpected,
-                 std::string_view message,
-                 std::source_location location = std::source_location::current()) noexcept -> bool
-{
-    if (result == notExpected) [[unlikely]]
-    {
-        if constexpr (fmt::is_formattable<std::decay_t<T>>() || std::is_enum<std::decay_t<T>>())
-        {
-            log::detail::LogMessageBuilder {fmt::format("{}: {}", message, result), location, log::Level::Warning};
-        }
-        else
-        {
-            log::detail::LogMessageBuilder {fmt::format("{}", message), location, log::Level::Warning};
-        }
-        return false;
-    }
-    return true;
-}
+            std::string_view format,
+            Args&&... args) -> ShouldNotBe<T, Args...>;
 
 }
 
 #if NDEBUG
 #    define DRIP_DEBUG_EXPECT(condition) ((void) 0)
-#    define DRIP_EXPECT(condition) drip::common::shouldBe(condition, #condition)
+#    define DRIP_EXPECT(condition) drip::common::ShouldBe(condition, #condition)
 #else
-#    define DRIP_DEBUG_EXPECT(condition) drip::common::expect(condition, #condition)
-#    define DRIP_EXPECT(condition) drip::common::expect(condition, #condition)
+#    define DRIP_DEBUG_EXPECT(condition) drip::common::Expect(condition, #condition)
+#    define DRIP_EXPECT(condition) drip::common::Expect(condition, #condition)
 #endif

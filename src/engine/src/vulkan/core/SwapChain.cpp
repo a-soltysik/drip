@@ -34,8 +34,10 @@ SwapChain::SwapChain(const Device& device, const vk::SurfaceKHR& surface, const 
       _swapChainImageFormat {chooseSwapSurfaceFormat(_device.querySwapChainSupport().formats)},
       _swapChainDepthFormat {.format = findDepthFormat(_device)},
       _swapChain {createSwapChain(_surface, _swapChainExtent, _device, _swapChainImageFormat)},
-      _swapChainImages {common::expect(
-          _device.logicalDevice.getSwapchainImagesKHR(_swapChain), vk::Result::eSuccess, "Can't get swapchain images")},
+      _swapChainImages {common::Expect(_device.logicalDevice.getSwapchainImagesKHR(_swapChain),
+                                       vk::Result::eSuccess,
+                                       "Can't get swapchain images")
+                            .result()},
       _swapChainImageViews {createImageViews(_swapChainImages, _swapChainImageFormat, _device)},
       _depthImages {createDepthImages(_device, _swapChainExtent, _swapChainImages.size(), _swapChainDepthFormat)},
       _depthImageMemories {createDepthImageMemories(_device, _depthImages, _swapChainImages.size())},
@@ -133,9 +135,10 @@ auto SwapChain::createImageViews(const std::vector<vk::Image>& swapChainImages,
                                                          .format = swapChainImageFormat.format,
                                                          .subresourceRange = subResourceRange};
 
-        imageViews.push_back(common::expect(device.logicalDevice.createImageView(createInfo),
+        imageViews.push_back(common::Expect(device.logicalDevice.createImageView(createInfo),
                                             vk::Result::eSuccess,
-                                            "Can't create image view"));
+                                            "Can't create image view")
+                                 .result());
     }
 
     return imageViews;
@@ -194,9 +197,10 @@ auto SwapChain::createRenderPass(const vk::SurfaceFormatKHR& imageFormat,
                                                           .dependencyCount = 1,
                                                           .pDependencies = &dependency};
 
-    return common::expect(device.logicalDevice.createRenderPass(renderPassInfo),
+    return common::Expect(device.logicalDevice.createRenderPass(renderPassInfo),
                           vk::Result::eSuccess,
-                          "Can't create render pass");
+                          "Can't create render pass")
+        .result();
 }
 
 auto SwapChain::createFrameBuffers(const std::vector<vk::ImageView>& swapChainImageViews,
@@ -205,7 +209,7 @@ auto SwapChain::createFrameBuffers(const std::vector<vk::ImageView>& swapChainIm
                                    vk::Extent2D swapChainExtent,
                                    const Device& device) -> std::vector<vk::Framebuffer>
 {
-    common::expect(swapChainImageViews.size() == depthImageViews.size(),
+    common::Expect(swapChainImageViews.size() == depthImageViews.size(),
                    "Swap chain image views count is different than depth image views count");
     auto result = std::vector<vk::Framebuffer> {};
     result.reserve(swapChainImageViews.size());
@@ -219,9 +223,10 @@ auto SwapChain::createFrameBuffers(const std::vector<vk::ImageView>& swapChainIm
                                                                 .width = swapChainExtent.width,
                                                                 .height = swapChainExtent.height,
                                                                 .layers = 1};
-        result.push_back(common::expect(device.logicalDevice.createFramebuffer(frameBufferInfo),
+        result.push_back(common::Expect(device.logicalDevice.createFramebuffer(frameBufferInfo),
                                         vk::Result::eSuccess,
-                                        "Can't create framebuffer"));
+                                        "Can't create framebuffer")
+                             .result());
     }
     return result;
 }
@@ -238,30 +243,32 @@ void SwapChain::createSyncObjects()
 
     for (auto i = size_t {}; i < Context::maxFramesInFlight; i++)
     {
-        _imageAvailableSemaphores.push_back(common::expect(_device.logicalDevice.createSemaphore(semaphoreInfo),
+        _imageAvailableSemaphores.push_back(common::Expect(_device.logicalDevice.createSemaphore(semaphoreInfo),
                                                            vk::Result::eSuccess,
-                                                           "Failed to create imageAvailable semaphore"));
+                                                           "Failed to create imageAvailable semaphore")
+                                                .result());
     }
 
     for (auto i = size_t {}; i < imagesCount(); i++)
     {
-        _renderFinishedSemaphores.push_back(common::expect(_device.logicalDevice.createSemaphore(semaphoreInfo),
+        _renderFinishedSemaphores.push_back(common::Expect(_device.logicalDevice.createSemaphore(semaphoreInfo),
                                                            vk::Result::eSuccess,
-                                                           "Failed to create renderFinished semaphore"));
+                                                           "Failed to create renderFinished semaphore")
+                                                .result());
     }
 
     for (auto i = size_t {}; i < Context::maxFramesInFlight; i++)
     {
-        _inFlightFences.push_back(common::expect(_device.logicalDevice.createFence(fenceInfo),
-                                                 vk::Result::eSuccess,
-                                                 "Failed to create fence"));
+        _inFlightFences.push_back(
+            common::Expect(_device.logicalDevice.createFence(fenceInfo), vk::Result::eSuccess, "Failed to create fence")
+                .result());
     }
 }
 
 void SwapChain::recreate()
 {
     common::log::Info("Starting to recreate swapchain");
-    common::shouldBe(_device.logicalDevice.waitIdle(), vk::Result::eSuccess, "Wait idle didn't succeed");
+    common::ShouldBe(_device.logicalDevice.waitIdle(), vk::Result::eSuccess, "Wait idle didn't succeed");
 
     cleanup();
     const auto swapChainSupport = _device.querySwapChainSupport();
@@ -269,16 +276,17 @@ void SwapChain::recreate()
 
     const auto oldImageFormat = _swapChainImageFormat;
     _swapChainImageFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-    common::shouldBe(oldImageFormat != _swapChainImageFormat, "Image format has changed!");
+    common::ShouldBe(oldImageFormat != _swapChainImageFormat, "Image format has changed!");
 
     const auto oldDepthFormat = _swapChainDepthFormat;
     _swapChainDepthFormat.format = findDepthFormat(_device);
-    common::shouldBe(oldDepthFormat != _swapChainDepthFormat, "Depth format has changed!");
+    common::ShouldBe(oldDepthFormat != _swapChainDepthFormat, "Depth format has changed!");
 
     _swapChain = createSwapChain(_surface, _swapChainExtent, _device, _swapChainImageFormat);
-    _swapChainImages = common::expect(_device.logicalDevice.getSwapchainImagesKHR(_swapChain),
+    _swapChainImages = common::Expect(_device.logicalDevice.getSwapchainImagesKHR(_swapChain),
                                       vk::Result::eSuccess,
-                                      "Can't get swapchain images");
+                                      "Can't get swapchain images")
+                           .result();
     _swapChainImageViews = createImageViews(_swapChainImages, _swapChainImageFormat, _device);
     _depthImages = createDepthImages(_device, _swapChainExtent, _swapChainImages.size(), _swapChainDepthFormat);
     _depthImageMemories = createDepthImageMemories(_device, _depthImages, _swapChainImages.size());
@@ -352,9 +360,10 @@ auto SwapChain::createSwapChain(const vk::SurfaceKHR& surface,
         createInfo.imageSharingMode = vk::SharingMode::eExclusive;
     }
 
-    return common::expect(device.logicalDevice.createSwapchainKHR(createInfo),
+    return common::Expect(device.logicalDevice.createSwapchainKHR(createInfo),
                           vk::Result::eSuccess,
-                          "Can't create swapchain");
+                          "Can't create swapchain")
+        .result();
 }
 
 auto SwapChain::getRenderPass() const noexcept -> const vk::RenderPass&
@@ -374,12 +383,13 @@ auto SwapChain::getExtent() const noexcept -> const vk::Extent2D&
 
 auto SwapChain::findDepthFormat(const Device& device) -> vk::Format
 {
-    return common::expect(
-        device.findSupportedFormat(
-            std::array {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
-            vk::ImageTiling::eOptimal,
-            vk::FormatFeatureFlagBits::eDepthStencilAttachment),
-        "Failed to find supported format");
+    return common::Expect(
+               device.findSupportedFormat(
+                   std::array {vk::Format::eD32Sfloat, vk::Format::eD32SfloatS8Uint, vk::Format::eD24UnormS8Uint},
+                   vk::ImageTiling::eOptimal,
+                   vk::FormatFeatureFlagBits::eDepthStencilAttachment),
+               "Failed to find supported format")
+        .result();
 }
 
 auto SwapChain::acquireNextImage() -> std::optional<uint32_t>
@@ -391,7 +401,7 @@ auto SwapChain::acquireNextImage() -> std::optional<uint32_t>
         return {};
     }
 
-    common::shouldBe(_device.logicalDevice.waitForFences(_inFlightFences[_currentFrame],
+    common::ShouldBe(_device.logicalDevice.waitForFences(_inFlightFences[_currentFrame],
                                                          vk::True,
                                                          std::numeric_limits<uint64_t>::max()),
                      vk::Result::eSuccess,
@@ -407,14 +417,14 @@ auto SwapChain::acquireNextImage() -> std::optional<uint32_t>
         recreate();
         return {};
     }
-    return common::expect(imageIndex, vk::Result::eSuccess, "Failed to acquire swap chain image");
+    return common::Expect(imageIndex, vk::Result::eSuccess, "Failed to acquire swap chain image").result();
 }
 
 void SwapChain::submitCommandBuffers(const vk::CommandBuffer& commandBuffer, uint32_t imageIndex)
 {
     if (_imagesInFlight[imageIndex] != nullptr) [[likely]]
     {
-        common::shouldBe(_device.logicalDevice.waitForFences(*_imagesInFlight[imageIndex],
+        common::ShouldBe(_device.logicalDevice.waitForFences(*_imagesInFlight[imageIndex],
                                                              vk::True,
                                                              std::numeric_limits<uint64_t>::max()),
                          vk::Result::eSuccess,
@@ -432,10 +442,10 @@ void SwapChain::submitCommandBuffers(const vk::CommandBuffer& commandBuffer, uin
                                             .signalSemaphoreCount = 1,
                                             .pSignalSemaphores = &_renderFinishedSemaphores[imageIndex]};
 
-    common::shouldBe(_device.logicalDevice.resetFences(_inFlightFences[_currentFrame]),
+    common::ShouldBe(_device.logicalDevice.resetFences(_inFlightFences[_currentFrame]),
                      vk::Result::eSuccess,
                      "Failed to Reset inFlight fence");
-    common::shouldBe(_device.graphicsQueue.submit(submitInfo, _inFlightFences[_currentFrame]),
+    common::ShouldBe(_device.graphicsQueue.submit(submitInfo, _inFlightFences[_currentFrame]),
                      vk::Result::eSuccess,
                      "Submitting the graphics queue didn't succeeded");
 
@@ -486,9 +496,10 @@ auto SwapChain::createDepthImages(const Device& device,
             .usage = vk::ImageUsageFlagBits::eDepthStencilAttachment,
             .sharingMode = vk::SharingMode::eExclusive
         };
-        depthImages.push_back(common::expect(device.logicalDevice.createImage(imageInfo),
+        depthImages.push_back(common::Expect(device.logicalDevice.createImage(imageInfo),
                                              vk::Result::eSuccess,
-                                             "Failed to create depth image"));
+                                             "Failed to create depth image")
+                                  .result());
     }
     return depthImages;
 }
@@ -513,9 +524,10 @@ auto SwapChain::createDepthImageViews(const Device& device,
                                  .baseArrayLayer = 0,
                                  .layerCount = 1}
         };
-        depthImageViews.push_back(common::expect(device.logicalDevice.createImageView(viewInfo),
+        depthImageViews.push_back(common::Expect(device.logicalDevice.createImageView(viewInfo),
                                                  vk::Result::eSuccess,
-                                                 "Failed to create depth image view"));
+                                                 "Failed to create depth image view")
+                                      .result());
     }
     return depthImageViews;
 }
@@ -532,13 +544,15 @@ auto SwapChain::createDepthImageMemories(const Device& device,
         const auto memoryRequirements = device.logicalDevice.getImageMemoryRequirements(depthImages[i]);
         const auto allocInfo = vk::MemoryAllocateInfo {
             .allocationSize = memoryRequirements.size,
-            .memoryTypeIndex = common::expect(
-                device.findMemoryType(memoryRequirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal),
-                "Failed to find memory type")};
-        depthImageMemories.push_back(common::expect(device.logicalDevice.allocateMemory(allocInfo),
+            .memoryTypeIndex = common::Expect(device.findMemoryType(memoryRequirements.memoryTypeBits,
+                                                                    vk::MemoryPropertyFlagBits::eDeviceLocal),
+                                              "Failed to find memory type")
+                                   .result()};
+        depthImageMemories.push_back(common::Expect(device.logicalDevice.allocateMemory(allocInfo),
                                                     vk::Result::eSuccess,
-                                                    "Failed to allocate depth image memory"));
-        common::expect(device.logicalDevice.bindImageMemory(depthImages[i], depthImageMemories[i], 0),
+                                                    "Failed to allocate depth image memory")
+                                         .result());
+        common::Expect(device.logicalDevice.bindImageMemory(depthImages[i], depthImageMemories[i], 0),
                        vk::Result::eSuccess,
                        "Failed to bind depth image memory");
     }

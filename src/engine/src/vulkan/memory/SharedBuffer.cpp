@@ -32,7 +32,7 @@ SharedBuffer::SharedBuffer(const Device& deviceRef,
       _device {deviceRef},
       _minOffsetAlignment {minOffsetAlignment}
 {
-    common::expect(_device.logicalDevice.bindBufferMemory(buffer, memory, 0),
+    common::Expect(_device.logicalDevice.bindBufferMemory(buffer, memory, 0),
                    vk::Result::eSuccess,
                    "Failed to bind memory buffer");
     common::log::Info("Created new buffer [{}] with size: {}", static_cast<void*>(buffer), size);
@@ -51,7 +51,7 @@ SharedBuffer::SharedBuffer(const Device& deviceRef, vk::DeviceSize bufferSize, v
 SharedBuffer::~SharedBuffer()
 {
     common::log::Info("Destroying shared buffer");
-    common::shouldBe(_device.logicalDevice.waitIdle(), vk::Result::eSuccess, "Failed to wait idle device");
+    common::ShouldBe(_device.logicalDevice.waitIdle(), vk::Result::eSuccess, "Failed to wait idle device");
 }
 
 auto SharedBuffer::createBuffer(const Device& device, vk::DeviceSize bufferSize) -> vk::Buffer
@@ -69,9 +69,10 @@ auto SharedBuffer::createBuffer(const Device& device, vk::DeviceSize bufferSize)
                                                   .usage = vk::BufferUsageFlagBits::eStorageBuffer,
                                                   .sharingMode = vk::SharingMode::eExclusive};
 
-    return common::expect(device.logicalDevice.createBuffer(bufferInfo),
+    return common::Expect(device.logicalDevice.createBuffer(bufferInfo),
                           vk::Result::eSuccess,
-                          "Failed to create buffer");
+                          "Failed to create buffer")
+        .result();
 }
 
 auto SharedBuffer::getBufferHandle() const -> Handle
@@ -80,15 +81,17 @@ auto SharedBuffer::getBufferHandle() const -> Handle
     const auto getInfo =
         vk::MemoryGetWin32HandleInfoKHR {.memory = memory,
                                          .handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueWin32};
-    return common::expect(_device.logicalDevice.getMemoryWin32HandleKHR(getInfo),
+    return common::Expect(_device.logicalDevice.getMemoryWin32HandleKHR(getInfo),
                           vk::Result::eSuccess,
-                          "Failed to get memory handle");
+                          "Failed to get memory handle")
+        .result();
 #else
     const auto getInfo =
         vk::MemoryGetFdInfoKHR {.memory = memory, .handleType = vk::ExternalMemoryHandleTypeFlagBits::eOpaqueFd};
-    return common::expect(_device.logicalDevice.getMemoryFdKHR(getInfo),
+    return common::Expect(_device.logicalDevice.getMemoryFdKHR(getInfo),
                           vk::Result::eSuccess,
-                          "Failed to get memory handle");
+                          "Failed to get memory handle")
+        .result();
 #endif
 }
 
@@ -107,12 +110,14 @@ auto SharedBuffer::allocateMemory(const Device& device, vk::Buffer buffer, vk::M
     const auto allocInfo = vk::MemoryAllocateInfo {
         .pNext = &exportAllocationInfo,
         .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = common::expect(device.findMemoryType(memoryRequirements.memoryTypeBits, properties),
-                                          "Failed to find memory type")};
+        .memoryTypeIndex = common::Expect(device.findMemoryType(memoryRequirements.memoryTypeBits, properties),
+                                          "Failed to find memory type")
+                               .result()};
 
-    return common::expect(device.logicalDevice.allocateMemory(allocInfo),
+    return common::Expect(device.logicalDevice.allocateMemory(allocInfo),
                           vk::Result::eSuccess,
-                          "Failed to allocated buffer memory");
+                          "Failed to allocated buffer memory")
+        .result();
 }
 
 auto SharedBuffer::getAlignment(vk::DeviceSize instanceSize, vk::DeviceSize minOffsetAlignment) noexcept

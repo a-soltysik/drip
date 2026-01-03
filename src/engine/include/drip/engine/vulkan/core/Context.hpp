@@ -71,7 +71,7 @@ private:
 
     [[nodiscard]] static constexpr auto shouldEnableValidationLayers() noexcept -> bool
     {
-        return config::isDebug;
+        return false;
     }
 
     [[nodiscard]] static auto getRequiredExtensions(const Window& window) -> std::vector<const char*>;

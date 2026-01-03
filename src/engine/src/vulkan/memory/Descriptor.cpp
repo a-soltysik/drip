@@ -4,8 +4,6 @@
 
 #include "vulkan/memory/Descriptor.hpp"
 
-#include <fmt/format.h>
-
 #include <cstdint>
 #include <memory>
 #include <ranges>
@@ -32,7 +30,7 @@ auto DescriptorSetLayout::Builder::addBinding(uint32_t binding,
                                               vk::ShaderStageFlags stageFlags,
                                               uint32_t count) -> Builder&
 {
-    common::expectNot(_bindings.contains(binding), fmt::format("Binding: {} already in use", binding));
+    common::ExpectNot(_bindings.contains(binding), "Binding: {} already in use", binding);
     const auto layoutBinding = vk::DescriptorSetLayoutBinding {.binding = binding,
                                                                .descriptorType = descriptorType,
                                                                .descriptorCount = count,
@@ -74,16 +72,16 @@ auto DescriptorSetLayout::createDescriptorSetLayout(
         vk::DescriptorSetLayoutCreateInfo {.flags = flags,
                                            .bindingCount = static_cast<uint32_t>(layoutBindings.size()),
                                            .pBindings = layoutBindings.data()};
-    return common::expect(device.logicalDevice.createDescriptorSetLayout(descriptorSetLayoutInfo),
+    return common::Expect(device.logicalDevice.createDescriptorSetLayout(descriptorSetLayoutInfo),
                           vk::Result::eSuccess,
-                          "Failed to create descriptor set layout");
+                          "Failed to create descriptor set layout")
+        .result();
 }
 
 auto DescriptorSetLayout::getDescriptorSetLayoutBinding(uint32_t binding) const -> const vk::DescriptorSetLayoutBinding&
 {
-    return common::expectNot(_bindings.find(binding),
-                             _bindings.cend(),
-                             fmt::format("Binding: {} does not exist", binding))
+    return common::ExpectNot(_bindings.find(binding), _bindings.cend(), "Binding: {} does not exist", binding)
+        .result()
         ->second;
 }
 
@@ -130,9 +128,10 @@ auto DescriptorPool::allocateDescriptor(vk::DescriptorSetLayout descriptorSetLay
                                                           .descriptorSetCount = 1,
                                                           .pSetLayouts = &descriptorSetLayout};
 
-    return common::shouldBe(_device.logicalDevice.allocateDescriptorSets(&allocInfo, &descriptor),
+    return common::ShouldBe(_device.logicalDevice.allocateDescriptorSets(&allocInfo, &descriptor),
                             vk::Result::eSuccess,
-                            "Failed to allocate descriptor sets");
+                            "Failed to allocate descriptor sets")
+        .result();
 }
 
 auto DescriptorPool::createDescriptorPool(const Device& device,
@@ -146,21 +145,22 @@ auto DescriptorPool::createDescriptorPool(const Device& device,
                                       .poolSizeCount = static_cast<uint32_t>(poolSizes.size()),
                                       .pPoolSizes = poolSizes.data()};
 
-    return common::expect(device.logicalDevice.createDescriptorPool(descriptorPoolInfo),
+    return common::Expect(device.logicalDevice.createDescriptorPool(descriptorPoolInfo),
                           vk::Result::eSuccess,
-                          "Failed to create descriptor pool!");
+                          "Failed to create descriptor pool!")
+        .result();
 }
 
 void DescriptorPool::freeDescriptors(const std::vector<vk::DescriptorSet>& descriptors) const
 {
-    common::expect(_device.logicalDevice.freeDescriptorSets(_descriptorPool, descriptors),
+    common::Expect(_device.logicalDevice.freeDescriptorSets(_descriptorPool, descriptors),
                    vk::Result::eSuccess,
                    "Failed to free descriptor sets");
 }
 
 void DescriptorPool::resetPool() const
 {
-    common::expect(_device.logicalDevice.resetDescriptorPool(_descriptorPool),
+    common::Expect(_device.logicalDevice.resetDescriptorPool(_descriptorPool),
                    vk::Result::eSuccess,
                    "Failed to reset descriptor pool");
 }

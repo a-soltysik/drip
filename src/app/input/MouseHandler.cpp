@@ -1,7 +1,6 @@
 #include "MouseHandler.hpp"
 
 #include <GLFW/glfw3.h>
-#include <fmt/format.h>
 #include <imgui.h>
 
 #include <cstddef>
@@ -74,7 +73,7 @@ auto MouseHandler::getButtonState(int button) const -> ButtonState
 {
     const auto isCorrectButton = static_cast<size_t>(button) < _states.size() && button >= 0;
 
-    common::expect(isCorrectButton, fmt::format("Button: {} is beyond the size of array", button));
+    common::Expect(isCorrectButton, "Button: {} is beyond the size of array", button);
 
     return _states[static_cast<size_t>(button)];
 }
@@ -96,7 +95,7 @@ void MouseHandler::handleMouseButtonState(const signal::MouseButtonStateChangedD
         return;
     }
     if (const auto isCorrectButton = data.button >= 0 && std::cmp_less(data.button, _states.size());
-        !common::shouldBe(isCorrectButton, fmt::format("Button: {} is beyond the size of array", data.button)))
+        !common::ShouldBe(isCorrectButton, "Button: {} is beyond the size of array", data.button).result())
     {
         return;
     }
