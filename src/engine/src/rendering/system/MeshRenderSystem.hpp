@@ -8,17 +8,15 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
-#include "drip/engine/rendering/Renderer.hpp"
-#include "drip/engine/rendering/system/RenderSystem.hpp"
+#include "RenderSystem.hpp"
 #include "drip/engine/resource/MeshRenderable.hpp"
+#include "rendering/FrameInfo.hpp"
+#include "rendering/Renderer.hpp"
+#include "vulkan/memory/Descriptor.hpp"
+#include "vulkan/pipeline/Pipeline.hpp"
 
 namespace drip::engine::gfx
 {
-
-class Device;
-struct FrameInfo;
-class DescriptorSetLayout;
-class Pipeline;
 
 class MeshRenderSystem : public RenderSystem
 {
@@ -30,7 +28,7 @@ public:
     auto operator=(MeshRenderSystem&&) = delete;
     ~MeshRenderSystem() noexcept override;
 
-    void render(const FrameInfo& frameInfo) const override;
+    void render(const FrameInfo& frameInfo) override;
 
 private:
     static auto createPipelineLayout(const Device& device, vk::DescriptorSetLayout setLayout) -> vk::PipelineLayout;

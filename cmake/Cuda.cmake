@@ -13,6 +13,11 @@ macro(drip_target_link_cuda target_name)
                 CUDA_ARCHITECTURES "${DRIP_CUDA_ARCHITECTURES}"
         )
     endif ()
+    if (DRIP_CUDA_ENABLE_LINEINFO)
+            target_compile_options(${target_name} PRIVATE
+                    $<$<COMPILE_LANGUAGE:CUDA>:-lineinfo>
+        )
+    endif ()
 
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_compile_options(${target_name} PRIVATE
@@ -24,13 +29,14 @@ macro(drip_target_link_cuda target_name)
             )
         endif ()
     else ()
-        if (DRIP_CUDA_ENABLE_LINEINFO)
-            target_compile_options(${target_name} PRIVATE
-                    $<$<COMPILE_LANGUAGE:CUDA>:-lineinfo>
-            )
-        endif ()
         target_compile_options(${target_name} PRIVATE
                 $<$<COMPILE_LANGUAGE:CUDA>:--ptxas-options=-O3>
+        )
+    endif ()
+
+    if (DRIP_ENABLE_WARNINGS_AS_ERRORS)
+        target_compile_options(${target_name} PRIVATE
+                $<$<COMPILE_LANGUAGE:CUDA>:-Werror=all-warnings>
         )
     endif ()
 
@@ -38,6 +44,5 @@ macro(drip_target_link_cuda target_name)
             $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
             $<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>
             $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>
-            $<$<COMPILE_LANGUAGE:CUDA>:-diag-suppress 20012>
     )
 endmacro()

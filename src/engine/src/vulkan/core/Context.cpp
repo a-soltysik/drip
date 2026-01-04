@@ -5,6 +5,7 @@
 #include "drip/engine/vulkan/core/Context.hpp"
 
 #include <backends/imgui_impl_vulkan.h>
+#include <imgui.h>
 #include <vulkan/vk_platform.h>
 #include <vulkan/vulkan_core.h>
 
@@ -13,7 +14,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <drip/common/log/LogMessageBuilder.hpp>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <span>
@@ -28,16 +28,17 @@
 #include <vulkan/vulkan_structs.hpp>
 
 #include "drip/engine/Window.hpp"
+#include "drip/engine/gui/GuiManager.hpp"
 #include "drip/engine/internal/config.hpp"
-#include "drip/engine/rendering/Renderer.hpp"
 #include "drip/engine/resource/Mesh.hpp"
 #include "drip/engine/resource/Texture.hpp"
 #include "drip/engine/scene/Camera.hpp"
 #include "drip/engine/scene/Scene.hpp"
-#include "drip/engine/utils/Signals.hpp"
 #include "drip/engine/utils/format/ResultFormatter.hpp"  // NOLINT(misc-include-cleaner)
 #include "rendering/FrameInfo.hpp"
 #include "rendering/UboLight.hpp"
+#include "rendering/system/GuiRenderSystem.hpp"
+#include "rendering/system/MeshRenderSystem.hpp"
 #include "vulkan/core/Device.hpp"
 #include "vulkan/memory/Buffer.hpp"
 #include "vulkan/memory/Descriptor.hpp"
@@ -81,9 +82,49 @@ VKAPI_ATTR auto VKAPI_CALL debugCallback(vk::DebugUtilsMessageSeverityFlagBitsEX
     return vk::False;
 }
 
-auto imGuiCallback(VkResult result)
+void imGuiCallback(VkResult result)
 {
     common::ShouldBe(vk::Result {result}, vk::Result::eSuccess, "ImGui didn't succeed: {}", vk::Result {result});
+}
+
+auto updateLightUbo(const Scene& scene) -> FragUbo
+{
+    static constexpr auto ambientColor = 0.1F;
+
+    auto fragUbo = FragUbo {
+        .inverseView = scene.getCamera().getInverseView(),
+        .pointLights = {},
+        .directionalLights = {},
+        .spotLights = {},
+        .ambientColor = {ambientColor, ambientColor, ambientColor},
+        .activePointLights = {},
+        .activeDirectionalLights = {},
+        .activeSpotLights = {}
+    };
+    for (auto i = size_t {}; i < fragUbo.directionalLights.size() && i < scene.getLights().directionalLights.size();
+         i++)
+    {
+        fragUbo.directionalLights[i] = fromDirectionalLight(scene.getLights().directionalLights[i]);
+    }
+    for (auto i = size_t {}; i < fragUbo.pointLights.size() && i < scene.getLights().pointLights.size(); i++)
+    {
+        fragUbo.pointLights[i] = fromPointLight(scene.getLights().pointLights[i]);
+    }
+    for (auto i = size_t {}; i < fragUbo.spotLights.size() && i < scene.getLights().spotLights.size(); i++)
+    {
+        fragUbo.spotLights[i] = fromSpotLight(scene.getLights().spotLights[i]);
+    }
+
+    fragUbo.activeDirectionalLights = static_cast<uint32_t>(scene.getLights().directionalLights.size());
+    fragUbo.activePointLights = static_cast<uint32_t>(scene.getLights().pointLights.size());
+    fragUbo.activeSpotLights = static_cast<uint32_t>(scene.getLights().spotLights.size());
+
+    return fragUbo;
+}
+
+auto updateCameraUbo(const Scene& scene) -> VertUbo
+{
+    return {.projection = scene.getCamera().getProjection(), .view = scene.getCamera().getView()};
 }
 
 }
@@ -132,6 +173,7 @@ Context::Context(const Window& window)
     common::log::Info("Vulkan API has been successfully initialized");
 
     initializeImGui();
+    setupRenderSystems();
 }
 
 Context::~Context() noexcept
@@ -296,7 +338,7 @@ auto Context::areValidationLayersSupported() const -> bool
     return true;
 }
 
-void Context::makeFrame(Scene& scene) const
+void Context::makeFrame(const Scene& scene) const
 {
     const auto commandBuffer = _renderer->beginFrame();
     if (!commandBuffer)
@@ -306,40 +348,8 @@ void Context::makeFrame(Scene& scene) const
 
     const auto frameIndex = _renderer->getFrameIndex();
 
-    const auto vertUbo = VertUbo {.projection = scene.getCamera().getProjection(), .view = scene.getCamera().getView()};
-
-    static constexpr auto ambientColor = 0.1F;
-
-    auto fragUbo = FragUbo {
-        .inverseView = scene.getCamera().getInverseView(),
-        .pointLights = {},
-        .directionalLights = {},
-        .spotLights = {},
-        .ambientColor = {ambientColor, ambientColor, ambientColor},
-        .activePointLights = {},
-        .activeDirectionalLights = {},
-        .activeSpotLights = {}
-    };
-    for (auto i = size_t {}; i < fragUbo.directionalLights.size() && i < scene.getLights().directionalLights.size();
-         i++)
-    {
-        fragUbo.directionalLights[i] = fromDirectionalLight(scene.getLights().directionalLights[i]);
-    }
-    for (auto i = size_t {}; i < fragUbo.pointLights.size() && i < scene.getLights().pointLights.size(); i++)
-    {
-        fragUbo.pointLights[i] = fromPointLight(scene.getLights().pointLights[i]);
-    }
-    for (auto i = size_t {}; i < fragUbo.spotLights.size() && i < scene.getLights().spotLights.size(); i++)
-    {
-        fragUbo.spotLights[i] = fromSpotLight(scene.getLights().spotLights[i]);
-    }
-
-    fragUbo.activeDirectionalLights = static_cast<uint32_t>(scene.getLights().directionalLights.size());
-    fragUbo.activePointLights = static_cast<uint32_t>(scene.getLights().pointLights.size());
-    fragUbo.activeSpotLights = static_cast<uint32_t>(scene.getLights().spotLights.size());
-
-    _uboVertBuffers[frameIndex]->writeAt(vertUbo, 0);
-    _uboFragBuffers[frameIndex]->writeAt(fragUbo, 0);
+    _uboVertBuffers[frameIndex]->writeAt(updateCameraUbo(scene), 0);
+    _uboFragBuffers[frameIndex]->writeAt(updateLightUbo(scene), 0);
     _renderer->beginSwapChainRenderPass();
 
     const auto frameInfo = FrameInfo {.scene = scene,
@@ -352,11 +362,7 @@ void Context::makeFrame(Scene& scene) const
         renderSystem->render(frameInfo);
     }
 
-    signal::beginGuiRender.registerSender()(
-        signal::BeginGuiRenderData {.commandBuffer = commandBuffer, .scene = std::ref(scene)});
-
     _renderer->endSwapChainRenderPass();
-
     _renderer->endFrame();
 }
 
@@ -394,7 +400,18 @@ void Context::initializeImGui()
         .CustomShaderFragCreateInfo = {}
     };
 
+    ImGui::CreateContext();
+    ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;  //NOLINT(hicpp-signed-bitwise)
+
     ImGui_ImplVulkan_Init(&initInfo);
+}
+
+void Context::setupRenderSystems()
+{
+    _renderSystems.clear();
+    _renderSystems.reserve(2);
+    _renderSystems.push_back(std::make_unique<MeshRenderSystem>(*_device, *_renderer));
+    _renderSystems.push_back(std::make_unique<GuiRenderSystem>(_guiManager));
 }
 
 void Context::registerMesh(std::unique_ptr<Mesh> mesh)
@@ -407,9 +424,9 @@ auto Context::getAspectRatio() const noexcept -> float
     return _renderer->getAspectRatio();
 }
 
-auto Context::getRenderer() const noexcept -> const Renderer&
+auto Context::getGuiManager() -> GuiManager&
 {
-    return *_renderer;
+    return _guiManager;
 }
 
 void Context::registerTexture(std::unique_ptr<Texture> texture)

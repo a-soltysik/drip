@@ -12,8 +12,8 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
+#include "drip/engine/gui/GuiManager.hpp"
 #include "drip/engine/internal/config.hpp"
-#include "drip/engine/rendering/system/RenderSystem.hpp"
 
 namespace drip::engine
 {
@@ -33,6 +33,7 @@ class Texture;
 class BoundaryParticleRenderSystem;
 class FluidParticleRenderSystem;
 class MeshRenderSystem;
+class RenderSystem;
 
 class Context
 {
@@ -46,21 +47,12 @@ public:
 
     static constexpr auto maxFramesInFlight = size_t {2};
 
-    void makeFrame(Scene& scene) const;
+    void makeFrame(const Scene& scene) const;
     [[nodiscard]] auto getDevice() const noexcept -> const Device&;
     void registerTexture(std::unique_ptr<Texture> texture);
     void registerMesh(std::unique_ptr<Mesh> mesh);
     [[nodiscard]] auto getAspectRatio() const noexcept -> float;
-    [[nodiscard]] auto getRenderer() const noexcept -> const Renderer&;
-
-    template <typename SystemType, typename... Args>
-    auto addRenderSystem(Args&&... args) -> SystemType&
-    {
-        auto system = std::make_unique<SystemType>(std::forward<Args>(args)...);
-        auto* ptr = system.get();
-        _renderSystems.push_back(std::move(system));
-        return *ptr;
-    }
+    auto getGuiManager() -> GuiManager&;
 
 private:
     struct InstanceDeleter
@@ -71,7 +63,7 @@ private:
 
     [[nodiscard]] static constexpr auto shouldEnableValidationLayers() noexcept -> bool
     {
-        return false;
+        return config::isDebug;
     }
 
     [[nodiscard]] static auto getRequiredExtensions(const Window& window) -> std::vector<const char*>;
@@ -84,6 +76,7 @@ private:
 
     auto enableValidationLayers(vk::InstanceCreateInfo& createInfo) -> bool;
     void initializeImGui();
+    void setupRenderSystems();
 
     inline static const vk::DebugUtilsMessengerCreateInfoEXT debugMessengerCreateInfo =
         createDebugMessengerCreateInfo();
@@ -100,6 +93,7 @@ private:
     std::vector<std::unique_ptr<Buffer>> _uboFragBuffers;
     std::vector<std::unique_ptr<Buffer>> _uboVertBuffers;
     std::unique_ptr<DescriptorPool> _guiPool;
+    GuiManager _guiManager;
 
     const Window& _window;
 };

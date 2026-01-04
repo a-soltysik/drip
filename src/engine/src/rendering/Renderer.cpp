@@ -2,7 +2,7 @@
 #include <drip/common/utils/Assert.hpp>
 // clang-format on
 
-#include "drip/engine/rendering/Renderer.hpp"
+#include "Renderer.hpp"
 
 #include <array>
 #include <cstdint>

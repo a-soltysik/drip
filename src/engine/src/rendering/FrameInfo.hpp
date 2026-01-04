@@ -6,6 +6,7 @@
 
 #include <array>
 #include <cstdint>
+#include <drip/engine/scene/Scene.hpp>
 #include <glm/ext/matrix_float4x4.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <vulkan/vulkan.hpp>
@@ -13,6 +14,7 @@
 
 #include "UboLight.hpp"
 #include "vulkan/memory/Alignment.hpp"
+#include "vulkan/memory/Buffer.hpp"
 
 namespace drip::engine::gfx
 {

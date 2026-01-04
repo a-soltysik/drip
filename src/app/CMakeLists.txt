@@ -9,6 +9,7 @@ target_sources(
         input/KeyboardHandler.cpp
         input/MouseHandler.cpp
         mesh/InvertedCube.cpp
+        ui/panel/StatisticsPanel.cpp
         ui/CameraHandler.cpp
         ui/MovementHandler.cpp
         ui/RotationHandler.cpp
@@ -28,6 +29,7 @@ target_link_system_libraries(
         PRIVATE
         drip::engine
         drip::common
+        drip::sim
 
         glfw
         glm::glm
