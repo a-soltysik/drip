@@ -101,9 +101,10 @@ auto createTextureImageView(const Device& device, vk::Image image)
                              .layerCount = 1}
     };
 
-    return common::expect(device.logicalDevice.createImageView(viewInfo),
+    return common::Expect(device.logicalDevice.createImageView(viewInfo),
                           vk::Result::eSuccess,
-                          "Failed to create image view");
+                          "Failed to create image view")
+        .result();
 }
 
 auto createTextureSampler(const Device& device) -> vk::Sampler
@@ -125,9 +126,10 @@ auto createTextureSampler(const Device& device) -> vk::Sampler
                                .borderColor = vk::BorderColor::eIntOpaqueBlack,
                                .unnormalizedCoordinates = vk::False};
 
-    return common::expect(device.logicalDevice.createSampler(samplerInfo),
+    return common::Expect(device.logicalDevice.createSampler(samplerInfo),
                           vk::Result::eSuccess,
-                          "Failed to create sampler");
+                          "Failed to create sampler")
+        .result();
 }
 }
 
@@ -190,23 +192,26 @@ void Texture::load(std::span<const uint8_t> data, size_t width, size_t height)
         .initialLayout = vk::ImageLayout::eUndefined
     };
 
-    _image = common::expect(_context.getDevice().logicalDevice.createImage(imageInfo),
+    _image = common::Expect(_context.getDevice().logicalDevice.createImage(imageInfo),
                             vk::Result::eSuccess,
-                            "Failed to create image");
+                            "Failed to create image")
+                 .result();
 
     const auto memoryRequirements = _context.getDevice().logicalDevice.getImageMemoryRequirements(_image);
 
     const auto allocationInfo = vk::MemoryAllocateInfo {
         .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = common::expect(_context.getDevice().findMemoryType(memoryRequirements.memoryTypeBits,
+        .memoryTypeIndex = common::Expect(_context.getDevice().findMemoryType(memoryRequirements.memoryTypeBits,
                                                                               vk::MemoryPropertyFlagBits::eDeviceLocal),
-                                          "Can't find device local memory"),
+                                          "Can't find device local memory")
+                               .result(),
     };
 
-    _imageMemory = common::expect(_context.getDevice().logicalDevice.allocateMemory(allocationInfo),
+    _imageMemory = common::Expect(_context.getDevice().logicalDevice.allocateMemory(allocationInfo),
                                   vk::Result::eSuccess,
-                                  "Failed to allocate memory");
-    common::expect(_context.getDevice().logicalDevice.bindImageMemory(_image, _imageMemory, 0),
+                                  "Failed to allocate memory")
+                       .result();
+    common::Expect(_context.getDevice().logicalDevice.bindImageMemory(_image, _imageMemory, 0),
                    vk::Result::eSuccess,
                    "Failed to bind image memory");
 

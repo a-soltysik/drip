@@ -4,8 +4,6 @@
 #include <drip/common/utils/Assert.hpp>
 // clang-format on
 
-#include <fmt/format.h>
-
 #include <algorithm>
 #include <ranges>
 #include <vulkan/vulkan.hpp>
@@ -85,9 +83,11 @@ public:
     {
         using ValueT = std::ranges::range_value_t<T>;
         const auto dataSize = std::ranges::size(data) * getAlignment(sizeof(ValueT), _minOffsetAlignment);
-        common::expect(
-            dataSize + offset <= size,
-            fmt::format("Data with size: {} can't fit to buffer with size: {} and offset: {}", dataSize, size, offset));
+        common::Expect(dataSize + offset <= size,
+                       "Data with size: {} can't fit to buffer with size: {} and offset: {}",
+                       dataSize,
+                       size,
+                       offset);
 
         std::copy(std::ranges::begin(data),
                   std::ranges::end(data),
@@ -104,11 +104,11 @@ public:
     auto writeAt(const T& data, vk::DeviceSize offset) -> vk::DeviceSize
     {
         const auto dataSize = getAlignment(sizeof(T), _minOffsetAlignment);
-        common::expect(dataSize + offset <= size,
-                       fmt::format("Data with size: {} can't fit to buffer with size: {} and offset: {}",
-                                   dataSize,
-                                   size,
-                                   _currentOffset));
+        common::Expect(dataSize + offset <= size,
+                       "Data with size: {} can't fit to buffer with size: {} and offset: {}",
+                       dataSize,
+                       size,
+                       _currentOffset);
 
         std::copy_n(reinterpret_cast<const char*>(&data), sizeof(data), static_cast<char*>(_mappedMemory) + offset);
 
@@ -123,11 +123,11 @@ public:
     auto writeAt(const T* data, size_t dataCount, vk::DeviceSize offset) -> vk::DeviceSize
     {
         const auto dataSize = getAlignment(dataCount * sizeof(T), _minOffsetAlignment);
-        common::expect(dataSize + offset <= size,
-                       fmt::format("Data with size: {} can't fit to buffer with size: {} and offset: {}",
-                                   dataSize,
-                                   size,
-                                   _currentOffset));
+        common::Expect(dataSize + offset <= size,
+                       "Data with size: {} can't fit to buffer with size: {} and offset: {}",
+                       dataSize,
+                       size,
+                       _currentOffset);
 
         std::copy_n(reinterpret_cast<const char*>(data),
                     dataCount * sizeof(T),

@@ -27,15 +27,17 @@ Device::Device(const vk::Instance& instance,
                const vk::SurfaceKHR& surface,
                std::span<const char* const> requiredExtensions)
     : physicalDevice {pickPhysicalDevice(instance, surface, requiredExtensions)},
-      queueFamilies {common::expect(findQueueFamilies(physicalDevice, surface), "Queue families need to exist")},
+      queueFamilies {
+          common::Expect(findQueueFamilies(physicalDevice, surface), "Queue families need to exist").result()},
       logicalDevice {createLogicalDevice(physicalDevice, queueFamilies, requiredExtensions)},
       graphicsQueue {logicalDevice.getQueue(queueFamilies.graphicsFamily, 0)},
       presentationQueue {logicalDevice.getQueue(queueFamilies.presentationFamily, 0)},
       commandPool {
-          common::expect(logicalDevice.createCommandPool({.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+          common::Expect(logicalDevice.createCommandPool({.flags = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
                                                           .queueFamilyIndex = queueFamilies.graphicsFamily}),
                          vk::Result::eSuccess,
-                         "Can't create command pool")},
+                         "Can't create command pool")
+              .result()},
       _surface {surface}
 {
 }
@@ -45,13 +47,14 @@ auto Device::pickPhysicalDevice(const vk::Instance& instance,
                                 std::span<const char* const> requiredExtensions) -> vk::PhysicalDevice
 {
     const auto devices =
-        common::expect(instance.enumeratePhysicalDevices(), vk::Result::eSuccess, "Can't enumerate physical devices");
+        common::Expect(instance.enumeratePhysicalDevices(), vk::Result::eSuccess, "Can't enumerate physical devices")
+            .result();
 
     const auto it = std::ranges::find_if(devices, [&surface, requiredExtensions](const auto& currentDevice) {
         return isDeviceSuitable(currentDevice, surface, requiredExtensions);
     });
 
-    common::expectNot(it, devices.cend(), "None_ of physical devices is suitable");
+    common::ExpectNot(it, devices.cend(), "None of physical devices is suitable");
     return *it;
 }
 
@@ -169,7 +172,8 @@ auto Device::createLogicalDevice(vk::PhysicalDevice device,
 #    pragma GCC diagnostic pop
 #endif
 
-    return common::expect(device.createDevice(createInfo), vk::Result::eSuccess, "Can't create physical device");
+    return common::Expect(device.createDevice(createInfo), vk::Result::eSuccess, "Can't create physical device")
+        .result();
 }
 
 auto Device::querySwapChainSupport() const -> SwapChainSupportDetails

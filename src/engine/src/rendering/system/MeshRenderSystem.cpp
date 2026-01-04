@@ -145,9 +145,10 @@ auto MeshRenderSystem::createPipelineLayout(const Device& device, vk::Descriptor
                                                                   .pSetLayouts = &setLayout,
                                                                   .pushConstantRangeCount = 1,
                                                                   .pPushConstantRanges = &pushConstantData};
-    return common::expect(device.logicalDevice.createPipelineLayout(pipelineLayoutInfo),
+    return common::Expect(device.logicalDevice.createPipelineLayout(pipelineLayoutInfo),
                           vk::Result::eSuccess,
-                          "Can't create pipeline layout");
+                          "Can't create pipeline layout")
+        .result();
 }
 
 void MeshRenderSystem::render(const FrameInfo& frameInfo) const

@@ -36,7 +36,7 @@ Renderer::~Renderer() noexcept
 
 auto Renderer::beginFrame() -> vk::CommandBuffer
 {
-    common::expectNot(_isFrameStarted, "Can't begin frame when already began");
+    common::ExpectNot(_isFrameStarted, "Can't begin frame when already began");
 
     const auto imageIndex = _swapChain->acquireNextImage();
     if (!imageIndex.has_value())
@@ -47,14 +47,14 @@ auto Renderer::beginFrame() -> vk::CommandBuffer
     _isFrameStarted = true;
     const auto commandBuffer = getCurrentCommandBuffer();
     static constexpr auto beginInfo = vk::CommandBufferBeginInfo {};
-    common::expect(commandBuffer.begin(beginInfo), vk::Result::eSuccess, "Can't begin commandBuffer");
+    common::Expect(commandBuffer.begin(beginInfo), vk::Result::eSuccess, "Can't begin commandBuffer");
     return commandBuffer;
 }
 
 void Renderer::endFrame()
 {
-    common::expect(_isFrameStarted, "Can't end frame which isn't began");
-    common::expect(getCurrentCommandBuffer().end(), vk::Result::eSuccess, "Can't end command buffer");
+    common::Expect(_isFrameStarted, "Can't end frame which isn't began");
+    common::Expect(getCurrentCommandBuffer().end(), vk::Result::eSuccess, "Can't end command buffer");
     _swapChain->submitCommandBuffers(getCurrentCommandBuffer(), _currentImageIndex);
 
     _isFrameStarted = false;
@@ -63,7 +63,7 @@ void Renderer::endFrame()
 
 void Renderer::beginSwapChainRenderPass() const
 {
-    common::expect(_isFrameStarted, "Can't begin render pass when frame is not began");
+    common::Expect(_isFrameStarted, "Can't begin render pass when frame is not began");
     static constexpr auto clearColor =
         vk::ClearValue {vk::ClearColorValue {.float32 {std::array {0.08F, 0.08F, 0.1F, 1.F}}}};
     static constexpr auto depthStencil = vk::ClearValue {
@@ -100,7 +100,7 @@ void Renderer::beginSwapChainRenderPass() const
 
 void Renderer::endSwapChainRenderPass() const
 {
-    common::expect(_isFrameStarted, "Can't end render pass when frame is not began");
+    common::Expect(_isFrameStarted, "Can't end render pass when frame is not began");
     getCurrentCommandBuffer().endRenderPass();
 }
 
@@ -111,7 +111,7 @@ auto Renderer::isFrameInProgress() const noexcept -> bool
 
 auto Renderer::getCurrentCommandBuffer() const noexcept -> const vk::CommandBuffer&
 {
-    common::expect(_isFrameStarted, "Can't get command buffer when frame not in progress");
+    common::Expect(_isFrameStarted, "Can't get command buffer when frame not in progress");
     return _commandBuffers[_currentFrameIndex];
 }
 
@@ -126,14 +126,15 @@ auto Renderer::createCommandBuffers() const -> std::vector<vk::CommandBuffer>
         vk::CommandBufferAllocateInfo {.commandPool = _device.commandPool,
                                        .level = vk::CommandBufferLevel::ePrimary,
                                        .commandBufferCount = static_cast<uint32_t>(_swapChain->imagesCount())};
-    return common::expect(_device.logicalDevice.allocateCommandBuffers(allocationInfo),
+    return common::Expect(_device.logicalDevice.allocateCommandBuffers(allocationInfo),
                           vk::Result::eSuccess,
-                          "Can't allocate command buffer");
+                          "Can't allocate command buffer")
+        .result();
 }
 
 auto Renderer::getFrameIndex() const noexcept -> uint32_t
 {
-    common::expect(_isFrameStarted, "Can't get frame index which is not in progress");
+    common::Expect(_isFrameStarted, "Can't get frame index which is not in progress");
     return _currentFrameIndex;
 }
 

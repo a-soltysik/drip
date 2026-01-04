@@ -76,9 +76,10 @@ auto Pipeline::createPipeline(const Device& device, const PipelineConfig& config
                                                               .renderPass = config.renderPass,
                                                               .subpass = config.subpass};
 
-    return ::drip::common::expect(device.logicalDevice.createGraphicsPipeline(nullptr, pipelineInfo),
-                                  vk::Result::eSuccess,
-                                  "Cannot create pipeline");
+    return common::Expect(device.logicalDevice.createGraphicsPipeline(nullptr, pipelineInfo),
+                          vk::Result::eSuccess,
+                          "Cannot create pipeline")
+        .result();
 }
 
 auto Pipeline::getHandle() const noexcept -> const vk::Pipeline&

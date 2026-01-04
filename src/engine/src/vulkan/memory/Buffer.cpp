@@ -42,7 +42,7 @@ Buffer::Buffer(const Device& deviceRef,
       _device {deviceRef},
       _minOffsetAlignment {minOffsetAlignment}
 {
-    common::expect(_device.logicalDevice.bindBufferMemory(buffer, memory, 0),
+    common::Expect(_device.logicalDevice.bindBufferMemory(buffer, memory, 0),
                    vk::Result::eSuccess,
                    "Failed to bind memory buffer");
     common::log::Info("Created new buffer [{}] with size: {}", static_cast<void*>(buffer), size);
@@ -71,31 +71,35 @@ Buffer::~Buffer() noexcept
 auto Buffer::flushWhole() const noexcept -> bool
 {
     const auto mappedRange = vk::MappedMemoryRange {.memory = memory, .offset = 0, .size = size};
-    return common::shouldBe(_device.logicalDevice.flushMappedMemoryRanges(mappedRange),
+    return common::ShouldBe(_device.logicalDevice.flushMappedMemoryRanges(mappedRange),
                             vk::Result::eSuccess,
-                            "Failed flushing memory");
+                            "Failed flushing memory")
+        .result();
 }
 
 auto Buffer::flush(vk::DeviceSize dataSize, vk::DeviceSize offset) const noexcept -> bool
 {
     const auto mappedRange = vk::MappedMemoryRange {.memory = memory, .offset = offset, .size = dataSize};
-    return common::shouldBe(_device.logicalDevice.flushMappedMemoryRanges(mappedRange),
+    return common::ShouldBe(_device.logicalDevice.flushMappedMemoryRanges(mappedRange),
                             vk::Result::eSuccess,
-                            "Failed flushing memory");
+                            "Failed flushing memory")
+        .result();
 }
 
 void Buffer::mapWhole() noexcept
 {
-    _mappedMemory = common::expect(_device.logicalDevice.mapMemory(memory, 0, size, {}),
+    _mappedMemory = common::Expect(_device.logicalDevice.mapMemory(memory, 0, size, {}),
                                    vk::Result::eSuccess,
-                                   "Failed to map memory of vertex buffer");
+                                   "Failed to map memory of vertex buffer")
+                        .result();
 }
 
 void Buffer::map(vk::DeviceSize dataSize, vk::DeviceSize offset) noexcept
 {
-    _mappedMemory = common::expect(_device.logicalDevice.mapMemory(memory, offset, dataSize, {}),
+    _mappedMemory = common::Expect(_device.logicalDevice.mapMemory(memory, offset, dataSize, {}),
                                    vk::Result::eSuccess,
-                                   "Failed to map memory of vertex buffer");
+                                   "Failed to map memory of vertex buffer")
+                        .result();
 }
 
 void Buffer::unmapWhole() noexcept
@@ -108,9 +112,10 @@ auto Buffer::createBuffer(const Device& device, vk::DeviceSize bufferSize, vk::B
 {
     const auto bufferInfo =
         vk::BufferCreateInfo {.size = bufferSize, .usage = usage, .sharingMode = vk::SharingMode::eExclusive};
-    return common::expect(device.logicalDevice.createBuffer(bufferInfo),
+    return common::Expect(device.logicalDevice.createBuffer(bufferInfo),
                           vk::Result::eSuccess,
-                          "Failed to create buffer");
+                          "Failed to create buffer")
+        .result();
 }
 
 auto Buffer::allocateMemory(const Device& device, vk::Buffer buffer, vk::MemoryPropertyFlags properties)
@@ -119,11 +124,13 @@ auto Buffer::allocateMemory(const Device& device, vk::Buffer buffer, vk::MemoryP
     const auto memoryRequirements = device.logicalDevice.getBufferMemoryRequirements(buffer);
     const auto allocInfo = vk::MemoryAllocateInfo {
         .allocationSize = memoryRequirements.size,
-        .memoryTypeIndex = common::expect(device.findMemoryType(memoryRequirements.memoryTypeBits, properties),
-                                          "Failed to find memory type")};
-    return common::expect(device.logicalDevice.allocateMemory(allocInfo),
+        .memoryTypeIndex = common::Expect(device.findMemoryType(memoryRequirements.memoryTypeBits, properties),
+                                          "Failed to find memory type")
+                               .result()};
+    return common::Expect(device.logicalDevice.allocateMemory(allocInfo),
                           vk::Result::eSuccess,
-                          "Failed to allocated buffer memory");
+                          "Failed to allocated buffer memory")
+        .result();
 }
 
 auto Buffer::getAlignment(vk::DeviceSize instanceSize, vk::DeviceSize minOffsetAlignment) noexcept -> vk::DeviceSize

@@ -8,16 +8,10 @@
 #include <source_location>
 #include <string_view>
 
+#include "Logger.hpp"
+
 namespace drip::common::log
 {
-
-enum class Level : uint8_t
-{
-    Debug,
-    Info,
-    Warning,
-    Error
-};
 
 namespace detail
 {
@@ -25,7 +19,10 @@ namespace detail
 class LogMessageBuilder
 {
 public:
-    explicit LogMessageBuilder(std::string message, const std::source_location& location, Level level);
+    explicit LogMessageBuilder(std::string message,
+                               const std::source_location& location,
+                               Logger::Level level,
+                               bool enabled);
     LogMessageBuilder(const LogMessageBuilder&) = delete;
     LogMessageBuilder(LogMessageBuilder&&) = delete;
     auto operator=(const LogMessageBuilder&) = delete;
@@ -50,7 +47,8 @@ private:
 
     std::string _message;
     std::source_location _location;
-    Level _level;
+    Logger::Level _level;
+    bool _enabled;
     bool _asString = false;
 };
 
@@ -90,25 +88,45 @@ struct Error : detail::LogMessageBuilder
 
 template <typename... Args>
 Debug<Args...>::Debug(std::string_view format, Args&&... args, const std::source_location& location) noexcept
-    : LogMessageBuilder(fmt::format(fmt::runtime(format), std::forward<Args>(args)...), location, Level::Debug)
+    : LogMessageBuilder(Logger::instance().shouldLog(Logger::Level::Debug)
+                            ? fmt::format(fmt::runtime(format), std::forward<Args>(args)...)
+                            : std::string {},
+                        location,
+                        Logger::Level::Debug,
+                        Logger::instance().shouldLog(Logger::Level::Debug))
 {
 }
 
 template <typename... Args>
 Info<Args...>::Info(std::string_view format, Args&&... args, const std::source_location& location) noexcept
-    : LogMessageBuilder(fmt::format(fmt::runtime(format), std::forward<Args>(args)...), location, Level::Info)
+    : LogMessageBuilder(Logger::instance().shouldLog(Logger::Level::Info)
+                            ? fmt::format(fmt::runtime(format), std::forward<Args>(args)...)
+                            : std::string {},
+                        location,
+                        Logger::Level::Info,
+                        Logger::instance().shouldLog(Logger::Level::Info))
 {
 }
 
 template <typename... Args>
 Warning<Args...>::Warning(std::string_view format, Args&&... args, const std::source_location& location) noexcept
-    : LogMessageBuilder(fmt::format(fmt::runtime(format), std::forward<Args>(args)...), location, Level::Warning)
+    : LogMessageBuilder(Logger::instance().shouldLog(Logger::Level::Warning)
+                            ? fmt::format(fmt::runtime(format), std::forward<Args>(args)...)
+                            : std::string {},
+                        location,
+                        Logger::Level::Warning,
+                        Logger::instance().shouldLog(Logger::Level::Warning))
 {
 }
 
 template <typename... Args>
 Error<Args...>::Error(std::string_view format, Args&&... args, const std::source_location& location) noexcept
-    : LogMessageBuilder(fmt::format(fmt::runtime(format), std::forward<Args>(args)...), location, Level::Error)
+    : LogMessageBuilder(Logger::instance().shouldLog(Logger::Level::Error)
+                            ? fmt::format(fmt::runtime(format), std::forward<Args>(args)...)
+                            : std::string {},
+                        location,
+                        Logger::Level::Error,
+                        Logger::instance().shouldLog(Logger::Level::Error))
 {
 }
 

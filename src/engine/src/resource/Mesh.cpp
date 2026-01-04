@@ -36,7 +36,7 @@ Mesh::~Mesh() = default;
 
 auto Mesh::createVertexBuffer(const Device& device, std::span<const Vertex> vertices) -> std::unique_ptr<Buffer>
 {
-    common::expect(
+    common::Expect(
         vertices.size(),
         [](const auto size) {
             return size >= 3;
@@ -101,12 +101,13 @@ auto Mesh::createIndexBuffer(const Device& device, const std::span<const uint32_
         return nullptr;
     }
 
-    if (!common::shouldBe(
-            indices.size(),
-            [](const auto size) {
-                return size >= 3;
-            },
-            "Indices  size should be greater or equal to 3"))
+    if (!common::ShouldBe(
+             indices.size(),
+             [](const auto size) {
+                 return size >= 3;
+             },
+             "Indices  size should be greater or equal to 3")
+             .result())
     {
         return nullptr;
     }

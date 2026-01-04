@@ -21,7 +21,6 @@
 #include <string_view>
 #include <thread>
 
-#include "drip/common/log/LogMessageBuilder.hpp"
 #include "drip/common/utils/Timer.hpp"
 
 namespace drip::common::log
@@ -29,10 +28,23 @@ namespace drip::common::log
 
 class LogSink;
 
+namespace detail
+{
+class LogMessageBuilder;
+}
+
 class Logger
 {
 public:
     using SinkId = uint32_t;
+
+    enum class Level : uint8_t
+    {
+        Debug,
+        Info,
+        Warning,
+        Error
+    };
 
     struct Entry
     {
@@ -52,6 +64,7 @@ public:
     void start();
     void stop();
     [[nodiscard]] auto isRunning() const -> bool;
+    [[nodiscard]] auto shouldLog(Level level) const -> bool;
 
     template <typename T, typename... Args>
     auto addSink(Args&&... args) -> SinkId
@@ -97,7 +110,7 @@ private:
 template <>
 struct fmt::formatter<drip::common::log::Logger::Entry> : formatter<std::string_view>
 {
-    [[nodiscard]] static auto getLevelTag(drip::common::log::Level level) -> std::string_view;
+    [[nodiscard]] static auto getLevelTag(drip::common::log::Logger::Level level) -> std::string_view;
     [[nodiscard]] static auto getFunctionName(std::string_view function) -> std::string_view;
 
     template <typename FormatContext>

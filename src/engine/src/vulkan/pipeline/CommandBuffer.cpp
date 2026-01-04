@@ -20,22 +20,23 @@ auto CommandBuffer::beginSingleTimeCommandBuffer(const Device& device) noexcept 
     const auto allocationInfo = vk::CommandBufferAllocateInfo {.commandPool = device.commandPool,
                                                                .level = vk::CommandBufferLevel::ePrimary,
                                                                .commandBufferCount = 1};
-    const auto commandBuffer = common::expect(device.logicalDevice.allocateCommandBuffers(allocationInfo),
+    const auto commandBuffer = common::Expect(device.logicalDevice.allocateCommandBuffers(allocationInfo),
                                               vk::Result::eSuccess,
-                                              "Can't allocate command buffer");
+                                              "Can't allocate command buffer")
+                                   .result();
     static constexpr auto beginInfo =
         vk::CommandBufferBeginInfo {.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit};
-    common::expect(commandBuffer.front().begin(beginInfo), vk::Result::eSuccess, "Couldn't begin command buffer");
+    common::Expect(commandBuffer.front().begin(beginInfo), vk::Result::eSuccess, "Couldn't begin command buffer");
     return commandBuffer.front();
 }
 
 void CommandBuffer::endSingleTimeCommandBuffer(const Device& device, vk::CommandBuffer buffer) noexcept
 {
-    common::expect(buffer.end(), vk::Result::eSuccess, "Couldn't end command buffer");
+    common::Expect(buffer.end(), vk::Result::eSuccess, "Couldn't end command buffer");
 
     const auto submitInfo = vk::SubmitInfo {.commandBufferCount = 1, .pCommandBuffers = &buffer};
-    common::expect(device.graphicsQueue.submit(submitInfo), vk::Result::eSuccess, "Couldn't submit graphics queue");
-    common::shouldBe(device.graphicsQueue.waitIdle(), vk::Result::eSuccess, "Couldn't wait idle on graphics queue");
+    common::Expect(device.graphicsQueue.submit(submitInfo), vk::Result::eSuccess, "Couldn't submit graphics queue");
+    common::ShouldBe(device.graphicsQueue.waitIdle(), vk::Result::eSuccess, "Couldn't wait idle on graphics queue");
     device.logicalDevice.free(device.commandPool, buffer);
 }
 }
