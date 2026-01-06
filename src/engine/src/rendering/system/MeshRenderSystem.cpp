@@ -2,7 +2,7 @@
 #include <drip/common/utils/Assert.hpp>
 // clang-format on
 
-#include "drip/engine/rendering/system/MeshRenderSystem.hpp"
+#include "MeshRenderSystem.hpp"
 
 #include <cstddef>
 #include <drip/common/utils/Utils.hpp>
@@ -15,7 +15,6 @@
 #include <vulkan/vulkan_handles.hpp>
 
 #include "drip/engine/internal/config.hpp"
-#include "drip/engine/rendering/Renderer.hpp"
 #include "drip/engine/resource/Mesh.hpp"
 #include "drip/engine/resource/MeshRenderable.hpp"
 #include "drip/engine/resource/Renderable.hpp"
@@ -25,6 +24,7 @@
 #include "drip/engine/scene/Scene.hpp"
 #include "drip/engine/utils/format/ResultFormatter.hpp"  // NOLINT(misc-include-cleaner)
 #include "rendering/FrameInfo.hpp"
+#include "rendering/Renderer.hpp"
 #include "vulkan/core/Device.hpp"
 #include "vulkan/memory/Alignment.hpp"
 #include "vulkan/memory/Buffer.hpp"
@@ -39,7 +39,9 @@ namespace
 
 struct PushConstantData
 {
-    DRIP_ALIGNED_MEMBERS((glm::vec3, translation), (glm::vec3, scale), (glm::vec3, rotation))
+    DRIP_ALIGNED_MEMBERS((glm::vec3, translation),  //
+                         (glm::vec3, scale),        //
+                         (glm::vec3, rotation))
 };
 
 static_assert(PushConstantData::alignment() == 16, "PushConstantData alignment must be 16 bytes");
@@ -151,7 +153,7 @@ auto MeshRenderSystem::createPipelineLayout(const Device& device, vk::Descriptor
         .result();
 }
 
-void MeshRenderSystem::render(const FrameInfo& frameInfo) const
+void MeshRenderSystem::render(const FrameInfo& frameInfo)
 {
     frameInfo.commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, _pipeline->getHandle());
 

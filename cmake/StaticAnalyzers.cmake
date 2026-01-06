@@ -9,8 +9,6 @@ macro(drip_enable_cppcheck WARNINGS_AS_ERRORS)
         endif ()
 
         if ("${CPPCHECK_OPTIONS}" STREQUAL "")
-            set(SUPPRESS_DIR "*:${CMAKE_CURRENT_BINARY_DIR}/_deps/*.h")
-            message(STATUS "CPPCHECK_OPTIONS suppress: ${SUPPRESS_DIR}")
             set(CMAKE_CXX_CPPCHECK
                     ${CPPCHECK}
                     --template=${CPPCHECK_TEMPLATE}
@@ -23,7 +21,6 @@ macro(drip_enable_cppcheck WARNINGS_AS_ERRORS)
                     --suppress=unknownMacro
                     --inconclusive
                     --check-level=exhaustive
-                    --suppress=${SUPPRESS_DIR}
                     --std=c++${CMAKE_CXX_STANDARD})
         endif ()
 
@@ -83,14 +80,5 @@ macro(drip_enable_clang_tidy target WARNINGS_AS_ERRORS)
         set(CMAKE_CXX_CLANG_TIDY ${CLANG_TIDY_OPTIONS})
     else ()
         message(${WARNING_MESSAGE} "clang-tidy requested but executable not found")
-    endif ()
-endmacro()
-
-macro(drip_enable_include_what_you_use)
-    find_program(INCLUDE_WHAT_YOU_USE include-what-you-use)
-    if (INCLUDE_WHAT_YOU_USE)
-        set(CMAKE_CXX_INCLUDE_WHAT_YOU_USE ${INCLUDE_WHAT_YOU_USE})
-    else ()
-        message(${WARNING_MESSAGE} "include-what-you-use requested but executable not found")
     endif ()
 endmacro()

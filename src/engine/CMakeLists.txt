@@ -4,6 +4,8 @@ add_library(drip::engine ALIAS drip_engine)
 target_sources(
         drip_engine
         PRIVATE
+        src/gui/GuiManager.cpp
+        
         src/resource/Mesh.cpp
         src/resource/MeshRenderable.cpp
         src/resource/Surface.cpp
@@ -13,6 +15,7 @@ target_sources(
         src/scene/Scene.cpp
 
         src/rendering/Renderer.cpp
+        src/rendering/system/GuiRenderSystem.cpp
         src/rendering/system/MeshRenderSystem.cpp
 
         src/vulkan/core/Context.cpp

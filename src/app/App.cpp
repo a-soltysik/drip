@@ -9,13 +9,13 @@
 #include <drip/common/log/Logger.hpp>
 #include <drip/common/log/sink/ConsoleSink.hpp>
 #include <drip/common/log/sink/FileSink.hpp>
-#include <drip/engine/rendering/system/MeshRenderSystem.hpp>
 #include <drip/engine/resource/MeshRenderable.hpp>
 #include <drip/engine/resource/Surface.hpp>
 #include <drip/engine/scene/Camera.hpp>
 #include <drip/engine/scene/Light.hpp>
 #include <drip/engine/utils/Signals.hpp>
 #include <drip/engine/vulkan/core/Context.hpp>
+#include <drip/simulation/Simulation.cuh>
 #include <glm/ext/vector_uint2.hpp>
 #include <memory>
 #include <utility>
@@ -24,6 +24,7 @@
 #include "mesh/InvertedCube.hpp"
 #include "ui/CameraHandler.hpp"
 #include "ui/Window.hpp"
+#include "ui/panel/StatisticsPanel.hpp"
 #include "utils/FrameTimeManager.hpp"
 
 namespace drip::app
@@ -51,6 +52,7 @@ void App::run()
 
     _window = std::make_unique<Window>(glm::uvec2 {1280, 720}, "drip::app");
     _api = std::make_unique<engine::gfx::Context>(*_window);
+    _api->getGuiManager().addPanel<StatisticsPanel>();
     _scene = std::make_unique<engine::gfx::Scene>();
     _cameraHandler = std::make_unique<CameraHandler>(dynamic_cast<Window&>(*_window),
                                                      _scene->getCamera(),
@@ -60,7 +62,6 @@ void App::run()
     },
                                                      engine::gfx::Transform {.translation = {0, 0.5F, -5}});
 
-    _api->addRenderSystem<engine::gfx::MeshRenderSystem>(_api->getDevice(), _api->getRenderer());
     initializeDefaultScene();
     mainLoop();
 }
@@ -94,6 +95,7 @@ void App::initializeDefaultScene() const
 void App::mainLoop() const
 {
     auto timeManager = FrameTimeManager {};
+    auto simulation = sim::Simulation {};
 
     while (!_window->shouldClose()) [[likely]]
     {
@@ -105,6 +107,7 @@ void App::mainLoop() const
             timeManager.update();
 
             _cameraHandler->update(timeManager.getDelta(), _api->getAspectRatio());
+            simulation.update(timeManager.getDelta());
 
             _api->makeFrame(*_scene);
         }
@@ -113,5 +116,7 @@ void App::mainLoop() const
             _window->waitForInput();
         }
     }
+
+    common::log::Info("Mean frame rate: {}", timeManager.getMeanFrameRate());
 }
 }
