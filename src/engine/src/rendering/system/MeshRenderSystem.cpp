@@ -121,8 +121,8 @@ auto MeshRenderSystem::createPipeline(const Device& device,
 
     return std::make_unique<Pipeline>(
         device,
-        PipelineConfig {.vertexShaderPath = config::shaderPath / "Default.vert.spv",
-                        .fragmentShaderPath = config::shaderPath / "Default.frag.spv",
+        PipelineConfig {.vertexShaderPath = config::shaderPath / "Mesh.vert.spv",
+                        .fragmentShaderPath = config::shaderPath / "Mesh.frag.spv",
                         .vertexBindingDescriptions = {Vertex::getBindingDescription()},
                         .vertexAttributeDescriptions = common::utils::fromArray(Vertex::getAttributeDescriptions()),
                         .inputAssemblyInfo = inputAssemblyInfo,

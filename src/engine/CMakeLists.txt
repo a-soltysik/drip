@@ -5,9 +5,10 @@ target_sources(
         drip_engine
         PRIVATE
         src/gui/GuiManager.cpp
-        
+
         src/resource/Mesh.cpp
         src/resource/MeshRenderable.cpp
+        src/resource/ParticlesRenderable.cpp
         src/resource/Surface.cpp
         src/resource/Texture.cpp
 
@@ -17,6 +18,7 @@ target_sources(
         src/rendering/Renderer.cpp
         src/rendering/system/GuiRenderSystem.cpp
         src/rendering/system/MeshRenderSystem.cpp
+        src/rendering/system/ParticlesRenderSystem.cpp
 
         src/vulkan/core/Context.cpp
         src/vulkan/core/Device.cpp

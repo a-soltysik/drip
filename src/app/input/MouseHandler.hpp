@@ -4,7 +4,6 @@
 
 #include <array>
 #include <cstdint>
-#include <drip/engine/utils/Signals.hpp>
 #include <glm/ext/vector_double2.hpp>
 #include <glm/ext/vector_float2.hpp>
 
@@ -43,7 +42,7 @@ private:
 
     signal::MouseButtonStateChanged::ReceiverT _mouseButtonStateChangedReceiver;
     signal::CursorPositionChanged::ReceiverT _cursorStateChangedReceiver;
-    engine::signal::GameLoopIterationStarted::ReceiverT _newFrameNotifReceiver;
+    signal::MainLoopIterationStarted::ReceiverT _newFrameNotifReceiver;
 
     const Window& _window;
 };

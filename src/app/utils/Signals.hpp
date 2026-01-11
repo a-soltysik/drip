@@ -1,5 +1,8 @@
 #pragma once
 
+#include <drip/common/utils/Signal.hpp>
+#include <drip/engine/Window.hpp>
+
 namespace drip::app::signal
 {
 
@@ -33,8 +36,11 @@ struct CursorPositionChangedData
 
 using CursorPositionChanged = common::signal::Signal<CursorPositionChangedData>;
 
+using MainLoopIterationStarted = common::signal::Signal<>;
+
 inline auto keyboardStateChanged = KeyboardStateChanged {};
 inline auto mouseButtonStateChanged = MouseButtonStateChanged {};
 inline auto cursorPositionChanged = CursorPositionChanged {};
+inline auto mainLoopIterationStarted = MainLoopIterationStarted {};
 
 }

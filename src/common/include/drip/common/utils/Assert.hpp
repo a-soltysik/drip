@@ -10,7 +10,6 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
-#include <variant>
 
 #include "drip/common/log/LogMessageBuilder.hpp"
 #include "drip/common/log/Logger.hpp"
@@ -113,13 +112,15 @@ class Expect
 public:
     using ValueType = detail::ValueTypeT<T>;
 
-    template <typename U = T>
+    template <typename U = T, typename E>
+    requires std::equality_comparable_with<T, E> && (!std::invocable<E, const std::remove_reference_t<T>&>)
     Expect(U&& result,
-           const std::equality_comparable_with<T> auto& expected,
+           E&& expected,
            std::string_view format,
            Args&&... args,
            std::source_location location = std::source_location::current()) noexcept
-        : _result(getResult(std::forward<U>(result), expected, location, format, std::forward<Args>(args)...))
+        : _result(getResult(
+              std::forward<U>(result), std::forward<E>(expected), location, format, std::forward<Args>(args)...))
     {
     }
 
@@ -133,13 +134,15 @@ public:
     {
     }
 
-    template <typename U = T>
+    template <typename U = T, typename P>
+    requires std::invocable<P, const std::remove_reference_t<U>&>
     Expect(U&& result,
-           std::invocable<const std::remove_reference_t<U>&> auto predicate,
+           P&& predicate,
            std::string_view format,
            Args&&... args,
            std::source_location location = std::source_location::current()) noexcept
-        : _result(getResult(std::forward<U>(result), predicate, location, format, std::forward<Args>(args)...))
+        : _result(getResult(
+              std::forward<U>(result), std::forward<P>(predicate), location, format, std::forward<Args>(args)...))
     {
     }
 
@@ -170,12 +173,10 @@ public:
     auto result() const& = delete;
 
 private:
-    template <typename U = T>
-    auto getResult(U&& result,
-                   const std::equality_comparable_with<T> auto& expected,
-                   std::source_location location,
-                   std::string_view format,
-                   Args&&... args) -> ValueType
+    template <typename U = T, typename E>
+    requires std::equality_comparable_with<T, E>
+    auto getResult(U&& result, E&& expected, std::source_location location, std::string_view format, Args&&... args)
+        -> ValueType
     {
         if (result != expected) [[unlikely]]
         {
@@ -198,19 +199,18 @@ private:
         return std::forward<U>(result).value;
     }
 
-    template <typename U = T>
-    auto getResult(U&& result,
-                   std::invocable<const std::remove_reference_t<U>&> auto predicate,
-                   std::source_location location,
-                   std::string_view format,
-                   Args&&... args) noexcept -> ValueType
+    template <typename U = T, typename P>
+    requires std::invocable<P, const std::remove_reference_t<U>&>
+    auto getResult(
+        U&& result, P&& predicate, std::source_location location, std::string_view format, Args&&... args) noexcept
+        -> ValueType
     {
         if (!predicate(result)) [[unlikely]]
         {
             panic(detail::formatMessage(format, static_cast<const void*>(nullptr), std::forward<Args>(args)...),
                   location);
         }
-        return std::forward<T>(result);
+        return std::forward<U>(result);
     }
 
     template <typename U = T>
@@ -244,19 +244,17 @@ private:
     ValueType _result;
 };
 
-template <typename T, typename... Args>
-Expect(T&& result, const std::equality_comparable_with<T> auto& expected, std::string_view format, Args&&... args)
-    -> Expect<T, Args...>;
+template <typename T, typename E, typename... Args>
+requires std::equality_comparable_with<T, E> && (!std::invocable<E, const std::remove_reference_t<T>&>)
+Expect(T&& result, E&& expected, std::string_view format, Args&&... args) -> Expect<T, Args...>;
 
 template <typename T, typename... Args>
 Expect(T&& result, const typename ResultHelper<T>::Error& expected, std::string_view format, Args&&... args)
     -> Expect<T, Args...>;
 
-template <typename T, typename... Args>
-Expect(T&& result,
-       std::invocable<const std::remove_reference_t<T>&> auto predicate,
-       std::string_view format,
-       Args&&... args) -> Expect<T, Args...>;
+template <typename T, typename P, typename... Args>
+requires std::invocable<P, const std::remove_reference_t<T>&>
+Expect(T&& result, P&& predicate, std::string_view format, Args&&... args) -> Expect<T, Args...>;
 
 template <typename T, typename... Args>
 Expect(T&& result, std::string_view format, Args&&... args) -> Expect<T, Args...>;
@@ -277,13 +275,15 @@ public:
     {
     }
 
-    template <typename U = T>
+    template <typename U = T, typename E>
+    requires std::equality_comparable_with<T, E> && (!std::invocable<E, const std::remove_reference_t<T>&>)
     ExpectNot(U&& result,
-              const std::equality_comparable_with<T> auto& notExpected,
+              E&& notExpected,
               std::string_view format,
               Args&&... args,
               std::source_location location = std::source_location::current()) noexcept
-        : _result(getResult(std::forward<U>(result), notExpected, location, format, std::forward<Args>(args)...))
+        : _result(getResult(
+              std::forward<U>(result), std::forward<E>(notExpected), location, format, std::forward<Args>(args)...))
     {
     }
 
@@ -297,13 +297,15 @@ public:
     {
     }
 
-    template <typename U = T>
+    template <typename U = T, typename P>
+    requires std::invocable<P, const std::remove_reference_t<U>&>
     ExpectNot(U&& result,
-              std::invocable<const std::remove_reference_t<U>&> auto predicate,
+              P&& predicate,
               std::string_view format,
               Args&&... args,
               std::source_location location = std::source_location::current()) noexcept
-        : _result(getResult(std::forward<U>(result), predicate, location, format, std::forward<Args>(args)...))
+        : _result(getResult(
+              std::forward<U>(result), std::forward<P>(predicate), location, format, std::forward<Args>(args)...))
     {
     }
 
@@ -328,12 +330,11 @@ private:
         return std::forward<U>(result);
     }
 
-    template <typename U = T>
-    auto getResult(U&& result,
-                   const std::equality_comparable_with<T> auto& notExpected,
-                   std::source_location location,
-                   std::string_view format,
-                   Args&&... args) noexcept -> ValueType
+    template <typename U = T, typename E>
+    requires std::equality_comparable_with<T, E>
+    auto getResult(
+        U&& result, E&& notExpected, std::source_location location, std::string_view format, Args&&... args) noexcept
+        -> ValueType
     {
         if (result == notExpected) [[unlikely]]
         {
@@ -356,12 +357,11 @@ private:
         return std::forward<U>(result).value;
     }
 
-    template <typename U = T>
-    auto getResult(U&& result,
-                   std::invocable<const std::remove_reference_t<U>&> auto predicate,
-                   std::source_location location,
-                   std::string_view format,
-                   Args&&... args) noexcept -> ValueType
+    template <typename U = T, typename P>
+    requires std::invocable<P, const std::remove_reference_t<U>&>
+    auto getResult(
+        U&& result, P&& predicate, std::source_location location, std::string_view format, Args&&... args) noexcept
+        -> ValueType
     {
         if (predicate(result)) [[unlikely]]
         {
@@ -377,31 +377,30 @@ private:
 template <typename T, typename... Args>
 ExpectNot(T&& result, std::string_view format, Args&&... args) -> ExpectNot<T, Args...>;
 
-template <typename T, typename... Args>
-ExpectNot(T&& result, const std::equality_comparable_with<T> auto& notExpected, std::string_view format, Args&&... args)
-    -> ExpectNot<T, Args...>;
+template <typename T, typename E, typename... Args>
+requires std::equality_comparable_with<T, E> && (!std::invocable<E, const std::remove_reference_t<T>&>)
+ExpectNot(T&& result, E&& notExpected, std::string_view format, Args&&... args) -> ExpectNot<T, Args...>;
 
 template <typename T, typename... Args>
 ExpectNot(T&& result, const typename ResultHelper<T>::Error& notExpected, std::string_view format, Args&&... args)
     -> ExpectNot<T, Args...>;
 
-template <typename T, typename... Args>
-ExpectNot(T&& result,
-          std::invocable<const std::remove_reference_t<T>&> auto predicate,
-          std::string_view format,
-          Args&&... args) -> ExpectNot<T, Args...>;
+template <typename T, typename P, typename... Args>
+requires std::invocable<P, const std::remove_reference_t<T>&>
+ExpectNot(T&& result, P&& predicate, std::string_view format, Args&&... args) -> ExpectNot<T, Args...>;
 
 template <typename T, typename... Args>
 class ShouldBe
 {
 public:
-    template <typename U = T>
+    template <typename U = T, typename E>
+    requires std::equality_comparable_with<T, E> && (!std::invocable<E, const std::remove_reference_t<T>&>)
     ShouldBe(const U& result,
-             const std::equality_comparable_with<T> auto& expected,
+             E&& expected,
              std::string_view format,
              Args&&... args,
              std::source_location location = std::source_location::current()) noexcept
-        : _success(getResult(result, expected, location, format, std::forward<Args>(args)...))
+        : _success(getResult(result, std::forward<E>(expected), location, format, std::forward<Args>(args)...))
     {
     }
 
@@ -415,13 +414,14 @@ public:
     {
     }
 
-    template <typename U = T>
+    template <typename U = T, typename P>
+    requires std::invocable<P, const std::remove_reference_t<U>&>
     ShouldBe(const U& value,
-             std::invocable<const std::remove_reference_t<U>&> auto predicate,
+             P&& predicate,
              std::string_view format,
              Args&&... args,
              std::source_location location = std::source_location::current()) noexcept
-        : _success(getResult(value, predicate, location, format, std::forward<Args>(args)...))
+        : _success(getResult(value, std::forward<P>(predicate), location, format, std::forward<Args>(args)...))
     {
     }
 
@@ -431,12 +431,11 @@ public:
     }
 
 private:
-    template <typename U = T>
-    auto getResult(const U& result,
-                   const std::equality_comparable_with<T> auto& expected,
-                   std::source_location location,
-                   std::string_view format,
-                   Args&&... args) noexcept -> bool
+    template <typename U = T, typename E>
+    requires std::equality_comparable_with<T, E>
+    auto getResult(
+        const U& result, E&& expected, std::source_location location, std::string_view format, Args&&... args) noexcept
+        -> bool
     {
         if (result != expected) [[unlikely]]
         {
@@ -462,12 +461,11 @@ private:
         return true;
     }
 
-    template <typename U = T>
-    auto getResult(const U& value,
-                   std::invocable<const std::remove_reference_t<U>&> auto predicate,
-                   std::source_location location,
-                   std::string_view format,
-                   Args&&... args) noexcept -> bool
+    template <typename U = T, typename P>
+    requires std::invocable<P, const std::remove_reference_t<U>&>
+    auto getResult(
+        const U& value, P&& predicate, std::source_location location, std::string_view format, Args&&... args) noexcept
+        -> bool
     {
         if (!predicate(value)) [[unlikely]]
         {
@@ -484,20 +482,16 @@ private:
     bool _success;
 };
 
-template <typename T, typename... Args>
-ShouldBe(const T& result,
-         const std::equality_comparable_with<T> auto& expected,
-         std::string_view format,
-         Args&&... args) -> ShouldBe<T, Args...>;
+template <typename T, typename E, typename... Args>
+requires std::equality_comparable_with<T, E> && (!std::invocable<E, const std::remove_reference_t<T>&>)
+ShouldBe(const T& result, E&& expected, std::string_view format, Args&&... args) -> ShouldBe<T, Args...>;
 
 template <typename T, typename... Args>
 ShouldBe(T&& result, std::string_view format, Args&&... args) -> ShouldBe<T, Args...>;
 
-template <typename T, typename... Args>
-ShouldBe(const T& value,
-         std::invocable<const std::remove_reference_t<T>&> auto predicate,
-         std::string_view format,
-         Args&&... args) -> ShouldBe<T, Args...>;
+template <typename T, typename P, typename... Args>
+requires std::invocable<P, const std::remove_reference_t<T>&>
+ShouldBe(const T& value, P&& predicate, std::string_view format, Args&&... args) -> ShouldBe<T, Args...>;
 
 template <typename T, typename... Args>
 class ShouldNotBe
@@ -513,13 +507,14 @@ public:
     {
     }
 
-    template <typename U = T>
+    template <typename U = T, typename E>
+    requires std::equality_comparable_with<T, E> && (!std::invocable<E, const std::remove_reference_t<T>&>)
     ShouldNotBe(const U& result,
-                const std::equality_comparable_with<T> auto& notExpected,
+                E&& notExpected,
                 std::string_view format,
                 Args&&... args,
                 std::source_location location = std::source_location::current()) noexcept
-        : _success(getResult(result, notExpected, location, format, std::forward<Args>(args)...))
+        : _success(getResult(result, std::forward<E>(notExpected), location, format, std::forward<Args>(args)...))
     {
     }
 
@@ -533,13 +528,14 @@ public:
     {
     }
 
-    template <typename U = T>
+    template <typename U = T, typename P>
+    requires std::invocable<P, const std::remove_reference_t<U>&>
     ShouldNotBe(const U& result,
-                std::invocable<const std::remove_reference_t<U>&> auto predicate,
+                P&& predicate,
                 std::string_view format,
                 Args&&... args,
                 std::source_location location = std::source_location::current()) noexcept
-        : _success(getResult(result, predicate, location, format, std::forward<Args>(args)...))
+        : _success(getResult(result, std::forward<P>(predicate), location, format, std::forward<Args>(args)...))
     {
     }
 
@@ -566,9 +562,10 @@ private:
         return true;
     }
 
-    template <typename U = T>
+    template <typename U = T, typename E>
+    requires std::equality_comparable_with<T, E>
     auto getResult(const U& result,
-                   const std::equality_comparable_with<T> auto& notExpected,
+                   E&& notExpected,
                    std::source_location location,
                    std::string_view format,
                    Args&&... args) noexcept -> bool
@@ -600,12 +597,11 @@ private:
         return true;
     }
 
-    template <typename U = T>
-    auto getResult(const U& result,
-                   std::invocable<const std::remove_reference_t<U>&> auto predicate,
-                   std::source_location location,
-                   std::string_view format,
-                   Args&&... args) noexcept -> bool
+    template <typename U = T, typename P>
+    requires std::invocable<P, const std::remove_reference_t<U>&>
+    auto getResult(
+        const U& result, P&& predicate, std::source_location location, std::string_view format, Args&&... args) noexcept
+        -> bool
     {
         if (predicate(result)) [[unlikely]]
         {
@@ -625,11 +621,9 @@ private:
 template <typename T, typename... Args>
 ShouldNotBe(const T& result, std::string_view format, Args&&... args) -> ShouldNotBe<T, Args...>;
 
-template <typename T, typename... Args>
-ShouldNotBe(const T& result,
-            const std::equality_comparable_with<T> auto& notExpected,
-            std::string_view format,
-            Args&&... args) -> ShouldNotBe<T, Args...>;
+template <typename T, typename E, typename... Args>
+requires std::equality_comparable_with<T, E> && (!std::invocable<E, const std::remove_reference_t<T>&>)
+ShouldNotBe(const T& result, E&& notExpected, std::string_view format, Args&&... args) -> ShouldNotBe<T, Args...>;
 
 template <typename T, typename... Args>
 ShouldNotBe(const T& result,
@@ -637,11 +631,9 @@ ShouldNotBe(const T& result,
             std::string_view format,
             Args&&... args) -> ShouldNotBe<T, Args...>;
 
-template <typename T, typename... Args>
-ShouldNotBe(const T& result,
-            std::invocable<const std::remove_reference_t<T>&> auto predicate,
-            std::string_view format,
-            Args&&... args) -> ShouldNotBe<T, Args...>;
+template <typename T, typename P, typename... Args>
+requires std::invocable<P, const std::remove_reference_t<T>&>
+ShouldNotBe(const T& result, P&& predicate, std::string_view format, Args&&... args) -> ShouldNotBe<T, Args...>;
 
 }
 

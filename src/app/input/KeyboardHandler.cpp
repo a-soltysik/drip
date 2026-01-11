@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/Assert.hpp>
-#include <drip/engine/utils/Signals.hpp>
 #include <utility>
 
 #include "ui/Window.hpp"
@@ -54,7 +53,7 @@ KeyboardHandler::KeyboardHandler(const Window& window)
         handleKeyboardState(data);
     });
 
-    _newFrameNotifReceiver = engine::signal::gameLoopIterationStarted.connect([this] {
+    _newFrameNotifReceiver = app::signal::mainLoopIterationStarted.connect([this] {
         handleGameLoopIteration();
     });
 }

@@ -30,9 +30,6 @@ class Renderer;
 class Scene;
 class Mesh;
 class Texture;
-class BoundaryParticleRenderSystem;
-class FluidParticleRenderSystem;
-class MeshRenderSystem;
 class RenderSystem;
 
 class Context
