@@ -5,7 +5,6 @@
 #include <array>
 #include <cstdint>
 #include <drip/common/utils/Signal.hpp>
-#include <drip/engine/utils/Signals.hpp>
 
 #include "utils/Signals.hpp"
 
@@ -35,7 +34,7 @@ private:
 
     std::array<State, GLFW_KEY_LAST> _states {};
     signal::KeyboardStateChanged::Signal::ReceiverT _keyboardStateChangedReceiver;
-    engine::signal::GameLoopIterationStarted::ReceiverT _newFrameNotifReceiver;
+    signal::MainLoopIterationStarted::ReceiverT _newFrameNotifReceiver;
     const Window& _window;
 };
 

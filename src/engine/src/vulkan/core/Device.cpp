@@ -50,9 +50,25 @@ auto Device::pickPhysicalDevice(const vk::Instance& instance,
         common::Expect(instance.enumeratePhysicalDevices(), vk::Result::eSuccess, "Can't enumerate physical devices")
             .result();
 
-    const auto it = std::ranges::find_if(devices, [&surface, requiredExtensions](const auto& currentDevice) {
-        return isDeviceSuitable(currentDevice, surface, requiredExtensions);
+    auto it = std::ranges::find_if(devices, [&surface, requiredExtensions](const auto& currentDevice) {
+        return currentDevice.getProperties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu &&
+               isDeviceSuitable(currentDevice, surface, requiredExtensions);
     });
+
+    if (it == devices.cend())
+    {
+        it = std::ranges::find_if(devices, [&surface, requiredExtensions](const auto& currentDevice) {
+            return currentDevice.getProperties().deviceType == vk::PhysicalDeviceType::eIntegratedGpu &&
+                   isDeviceSuitable(currentDevice, surface, requiredExtensions);
+        });
+    }
+
+    if (it == devices.cend())
+    {
+        it = std::ranges::find_if(devices, [&surface, requiredExtensions](const auto& currentDevice) {
+            return isDeviceSuitable(currentDevice, surface, requiredExtensions);
+        });
+    }
 
     common::ExpectNot(it, devices.cend(), "None of physical devices is suitable");
     return *it;

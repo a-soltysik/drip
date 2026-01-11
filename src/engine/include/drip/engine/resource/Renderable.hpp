@@ -9,12 +9,18 @@ public:
     enum class Type
     {
         Mesh,
-        Billboard,
+        Particles,
     };
 
-    virtual ~Renderable() = default;
-    virtual auto getType() const -> Type = 0;
-    virtual auto getName() const -> std::string_view = 0;
+    Renderable() = default;
+    Renderable(const Renderable&) = delete;
+    Renderable(Renderable&&) = delete;
+    auto operator=(const Renderable&) = delete;
+    auto operator=(Renderable&&) = delete;
+    virtual ~Renderable() noexcept = default;
+
+    [[nodiscard]] virtual auto getType() const -> Type = 0;
+    [[nodiscard]] virtual auto getName() const -> std::string_view = 0;
 };
 
 }

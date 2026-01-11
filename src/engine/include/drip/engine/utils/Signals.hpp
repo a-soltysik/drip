@@ -14,9 +14,6 @@ struct FrameBufferResizedData
 };
 
 using FrameBufferResized = common::signal::Signal<FrameBufferResizedData>;
-using GameLoopIterationStarted = common::signal::Signal<>;
-
 inline auto frameBufferResized = FrameBufferResized {};
-inline auto gameLoopIterationStarted = GameLoopIterationStarted {};
 
 }

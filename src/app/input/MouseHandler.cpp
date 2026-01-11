@@ -6,7 +6,6 @@
 #include <cstddef>
 #include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/Assert.hpp>
-#include <drip/engine/utils/Signals.hpp>
 #include <glm/ext/vector_float2.hpp>
 #include <utility>
 
@@ -64,7 +63,7 @@ MouseHandler::MouseHandler(const Window& window)
         handleCursorPosition(data);
     });
 
-    _newFrameNotifReceiver = engine::signal::gameLoopIterationStarted.connect([this] {
+    _newFrameNotifReceiver = app::signal::mainLoopIterationStarted.connect([this] {
         handleGameLoopIteration();
     });
 }

@@ -13,19 +13,22 @@
 #include <drip/engine/resource/Surface.hpp>
 #include <drip/engine/scene/Camera.hpp>
 #include <drip/engine/scene/Light.hpp>
-#include <drip/engine/utils/Signals.hpp>
 #include <drip/engine/vulkan/core/Context.hpp>
 #include <drip/simulation/Simulation.cuh>
+#include <glm/ext/vector_float4.hpp>
 #include <glm/ext/vector_uint2.hpp>
 #include <memory>
 #include <utility>
 
 #include "SystemSignalHandler.hpp"
+#include "drip/engine/resource/ParticlesRenderable.hpp"
+#include "drip/simulation/ExternalMemory.cuh"
 #include "mesh/InvertedCube.hpp"
 #include "ui/CameraHandler.hpp"
 #include "ui/Window.hpp"
 #include "ui/panel/StatisticsPanel.hpp"
 #include "utils/FrameTimeManager.hpp"
+#include "utils/Signals.hpp"
 
 namespace drip::app
 {
@@ -66,7 +69,7 @@ void App::run()
     mainLoop();
 }
 
-void App::initializeDefaultScene() const
+void App::initializeDefaultScene()
 {
     auto blueTexture = engine::gfx::Texture::getDefaultTexture(*_api, {0.25, 0.25, 0.3, 1.F});
     auto invertedCubeMesh = mesh::inverted_cube::create(*_api, "InvertedCube");
@@ -77,6 +80,21 @@ void App::initializeDefaultScene() const
 
     _api->registerMesh(std::move(invertedCubeMesh));
     _api->registerTexture(std::move(blueTexture));
+
+    static constexpr auto particleCount = 1000ZU;
+    auto fluidParticlesRenderable =
+        std::make_unique<engine::gfx::ParticlesRenderable>(*_api, "FluidParticles", particleCount);
+    const auto sharedMemory = fluidParticlesRenderable->getDataBuffer();
+
+    common::log::Info("Initializing simulation with {} particles", particleCount);
+    _simulation = sim::Simulation::create(sim::Simulation::SharedMemory {
+        .positions = sim::ExternalMemory::create(sharedMemory.translations, particleCount * sizeof(glm::vec4)),
+        .colors = sim::ExternalMemory::create(sharedMemory.colors, particleCount * sizeof(glm::vec4)),
+        .sizes = sim::ExternalMemory::create(sharedMemory.sizes, particleCount * sizeof(float))});
+
+    common::log::Info("Initialized simulation with {} particles", particleCount);
+
+    _scene->addRenderable(std::move(fluidParticlesRenderable));
 
     auto directionalLight = engine::gfx::DirectionalLight {};
     directionalLight.name = "DirectionalLight";
@@ -95,19 +113,19 @@ void App::initializeDefaultScene() const
 void App::mainLoop() const
 {
     auto timeManager = FrameTimeManager {};
-    auto simulation = sim::Simulation {};
 
     while (!_window->shouldClose()) [[likely]]
     {
         if (!_window->isMinimized()) [[likely]]
         {
-            engine::signal::gameLoopIterationStarted.registerSender()();
+            signal::mainLoopIterationStarted.registerSender()();
             _window->processInput();
 
             timeManager.update();
 
             _cameraHandler->update(timeManager.getDelta(), _api->getAspectRatio());
-            simulation.update(timeManager.getDelta());
+
+            _simulation->update(timeManager.getDelta());
 
             _api->makeFrame(*_scene);
         }

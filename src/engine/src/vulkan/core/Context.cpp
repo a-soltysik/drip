@@ -39,6 +39,7 @@
 #include "rendering/UboLight.hpp"
 #include "rendering/system/GuiRenderSystem.hpp"
 #include "rendering/system/MeshRenderSystem.hpp"
+#include "rendering/system/ParticlesRenderSystem.hpp"
 #include "vulkan/core/Device.hpp"
 #include "vulkan/memory/Buffer.hpp"
 #include "vulkan/memory/Descriptor.hpp"
@@ -184,10 +185,10 @@ Context::~Context() noexcept
 
     ImGui_ImplVulkan_Shutdown();
 
-    if (_debugMessenger)
-    {
-        _instance->destroyDebugUtilsMessengerEXT(_debugMessenger.value());
-    }
+    _debugMessenger.and_then([this](const auto& messenger) {
+        _instance->destroyDebugUtilsMessengerEXT(messenger);
+        return std::make_optional(messenger);
+    });
 }
 
 auto Context::createInstance(const Window& window) -> std::unique_ptr<vk::Instance, InstanceDeleter>
@@ -409,8 +410,9 @@ void Context::initializeImGui()
 void Context::setupRenderSystems()
 {
     _renderSystems.clear();
-    _renderSystems.reserve(2);
+    _renderSystems.reserve(3);
     _renderSystems.push_back(std::make_unique<MeshRenderSystem>(*_device, *_renderer));
+    _renderSystems.push_back(std::make_unique<ParticlesRenderSystem>(*_device, *_renderer));
     _renderSystems.push_back(std::make_unique<GuiRenderSystem>(_guiManager));
 }
 
