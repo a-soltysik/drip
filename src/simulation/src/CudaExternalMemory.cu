@@ -28,7 +28,8 @@ CudaExternalMemory::CudaExternalMemory(Handle handle, size_t size)
                    cudaSuccess,
                    "Failed to import external memory");
 
-    const auto bufferDesc = cudaExternalMemoryBufferDesc {.offset = {}, .size = size, .flags = {}, .reserved = {}};
+    auto bufferDesc = cudaExternalMemoryBufferDesc {};
+    bufferDesc.size = size;
 
     common::Expect(cudaExternalMemoryGetMappedBuffer(&_data, _memoryHandle, &bufferDesc),
                    cudaSuccess,

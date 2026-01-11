@@ -15,7 +15,7 @@ Sph::Sph(SharedMemory sharedMemory)
              .colors = _sharedMemory.colors->toSpan<glm::vec4>(),
              .sizes = _sharedMemory.sizes->toSpan<float>()}
 {
-    static constexpr auto violet = glm::vec4 {0.5F, 0.F, 1.F, 1.F};
+    const auto violet = glm::vec4 {0.5F, 0.F, 1.F, 1.F};
 
     common::log::Info("Sph simulation initializing with {} particles", _data.positions.size());
 
