@@ -2,7 +2,7 @@
 #include <chrono>
 #include <cstdint>
 
-namespace drip::app
+namespace drip::app::utils
 {
 
 class FrameTimeManager

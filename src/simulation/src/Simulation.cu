@@ -4,9 +4,9 @@
 namespace drip::sim
 {
 
-auto Simulation::create(SharedMemory sharedMemory) -> std::unique_ptr<Simulation>
+auto Simulation::create(SharedMemory sharedMemory, Domain domain) -> std::unique_ptr<Simulation>
 {
-    auto result = std::make_unique<Sph>(std::move(sharedMemory));
+    auto result = std::make_unique<Sph>(std::move(sharedMemory), domain);
     return result;
 }
 

@@ -25,11 +25,13 @@ find_package(Vulkan REQUIRED)
 target_link_system_libraries(
         drip_common
         PUBLIC
-        fmt::fmt
         Boost::exception
         Boost::stacktrace
         Boost::stacktrace_from_exception
-        Boost::thread)
+        Boost::thread
+        fmt::fmt
+        glm::glm
+)
 
 target_link_libraries(
         drip_common

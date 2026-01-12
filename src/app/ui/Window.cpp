@@ -10,8 +10,8 @@
 #include <cstdint>
 #include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/Assert.hpp>
-#include <drip/engine/Window.hpp>
-#include <drip/engine/utils/Signals.hpp>
+#include <drip/gfx/Window.hpp>
+#include <drip/gfx/utils/Signals.hpp>
 #include <glm/ext/vector_uint2.hpp>
 #include <memory>
 #include <span>
@@ -26,11 +26,11 @@ namespace
 
 void framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
-    static const auto sender = drip::engine::signal::frameBufferResized.registerSender();
+    static const auto sender = drip::gfx::signal::frameBufferResized.registerSender();
     const auto windowId = drip::app::Window::makeId(window);
     drip::common::log::Info("Size of window [{}] changed to {}x{}", windowId, width, height);
 
-    sender(drip::engine::signal::FrameBufferResizedData {.id = windowId, .x = width, .y = height});
+    sender(drip::gfx::signal::FrameBufferResizedData {.id = windowId, .x = width, .y = height});
 }
 
 }
@@ -46,7 +46,7 @@ Window::Window(const glm::uvec2 size, const char* name)
     _mouseHandler = std::make_unique<MouseHandler>(*this);
     glfwSetFramebufferSizeCallback(_window, framebufferResizeCallback);
 
-    _frameBufferResizedReceiver = engine::signal::frameBufferResized.connect([this](auto data) {
+    _frameBufferResizedReceiver = gfx::signal::frameBufferResized.connect([this](auto data) {
         if (data.id == getId())
         {
             common::log::Debug("Received framebuffer resized notif");
@@ -152,7 +152,7 @@ auto Window::getId() const -> size_t
     return makeId(_window);
 }
 
-auto Window::makeId(GLFWwindow* window) -> engine::Window::Id
+auto Window::makeId(GLFWwindow* window) -> gfx::Window::Id
 {
     return std::bit_cast<size_t>(window);
 }
