@@ -1,7 +1,7 @@
 #pragma once
 #include <chrono>
 
-namespace drip::app
+namespace drip::app::utils
 {
 
 template <typename F, typename T = std::invoke_result_t<F>>

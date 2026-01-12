@@ -3,18 +3,24 @@ add_executable(drip)
 target_sources(
         drip
         PRIVATE
-        App.cpp
-        main.cpp
-        SystemSignalHandler.cpp
         input/KeyboardHandler.cpp
         input/MouseHandler.cpp
+
         mesh/InvertedCube.cpp
+
         ui/panel/StatisticsPanel.cpp
         ui/CameraHandler.cpp
         ui/MovementHandler.cpp
         ui/RotationHandler.cpp
         ui/Window.cpp
-        utils/FrameTimeManager.cpp)
+
+        utils/FrameTimeManager.cpp
+        utils/Scene.cpp
+        utils/SystemSignalHandler.cpp
+
+        App.cpp
+        main.cpp
+)
 
 target_link_libraries(
         drip

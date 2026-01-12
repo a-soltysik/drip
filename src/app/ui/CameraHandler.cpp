@@ -1,7 +1,7 @@
 #include "CameraHandler.hpp"
 
-#include <drip/engine/resource/MeshRenderable.hpp>
-#include <drip/engine/scene/Camera.hpp>
+#include <drip/gfx/resource/MeshRenderable.hpp>
+#include <drip/gfx/scene/Camera.hpp>
 #include <glm/common.hpp>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/geometric.hpp>
@@ -16,9 +16,9 @@ namespace drip::app
 {
 
 CameraHandler::CameraHandler(const Window& window,
-                             engine::gfx::Camera& camera,
+                             gfx::Camera& camera,
                              const Config& config,
-                             const engine::gfx::Transform& initialTransform)
+                             const gfx::Transform& initialTransform)
     : _window(window),
       _camera(camera),
       _transform(initialTransform),
@@ -28,10 +28,8 @@ CameraHandler::CameraHandler(const Window& window,
 
 void CameraHandler::update(float deltaTime, float aspectRatio)
 {
-    _camera.setPerspectiveProjection(engine::gfx::projection::Perspective {.fovY = glm::radians(50.F),
-                                                                           .aspect = aspectRatio,
-                                                                           .zNear = 0.1F,
-                                                                           .zFar = 100});
+    _camera.setPerspectiveProjection(
+        gfx::projection::Perspective {.fovY = glm::radians(50.F), .aspect = aspectRatio, .zNear = 0.1F, .zFar = 100});
     _transform.rotation += glm::vec3 {RotationHandler {_window}.getRotation() * _config.rotationSpeed * deltaTime, 0};
 
     _transform.rotation.x = glm::clamp(_transform.rotation.x, -glm::half_pi<float>(), glm::half_pi<float>());
@@ -53,7 +51,7 @@ void CameraHandler::update(float deltaTime, float aspectRatio)
         _transform.translation += glm::normalize(translation) * _config.moveSpeed * deltaTime;
     }
 
-    _camera.setViewYXZ(engine::gfx::view::YXZ {
+    _camera.setViewYXZ(gfx::view::YXZ {
         .position = _transform.translation,
         .rotation = {-_transform.rotation.x, _transform.rotation.y, 0}
     });

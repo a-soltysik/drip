@@ -19,9 +19,9 @@ void StatisticsPanel::render()
 
 void StatisticsPanel::renderFramerate()
 {
-    static auto fpsCache = IntervalCache {std::chrono::seconds {1}, [] {
-                                              return ImGui::GetIO().Framerate;
-                                          }};
+    static auto fpsCache = utils::IntervalCache {std::chrono::seconds {1}, [] {
+                                                     return ImGui::GetIO().Framerate;
+                                                 }};
 
     //NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg,hicpp-vararg)
     ImGui::Text("FPS: %.1f", static_cast<double>(fpsCache.get()));

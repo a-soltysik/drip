@@ -3,7 +3,7 @@
 #include <chrono>
 #include <cstdint>
 
-namespace drip::app
+namespace drip::app::utils
 {
 
 auto FrameTimeManager::update() -> void

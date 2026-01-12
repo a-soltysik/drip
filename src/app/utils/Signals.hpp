@@ -1,14 +1,14 @@
 #pragma once
 
 #include <drip/common/utils/Signal.hpp>
-#include <drip/engine/Window.hpp>
+#include <drip/gfx/Window.hpp>
 
 namespace drip::app::signal
 {
 
 struct KeyboardStateChangedData
 {
-    engine::Window::Id id;
+    gfx::Window::Id id;
     int key;
     int scancode;
     int action;
@@ -19,7 +19,7 @@ using KeyboardStateChanged = common::signal::Signal<KeyboardStateChangedData>;
 
 struct MouseButtonStateChangedData
 {
-    engine::Window::Id id;
+    gfx::Window::Id id;
     int button;
     int action;
     int mods;
@@ -29,7 +29,7 @@ using MouseButtonStateChanged = common::signal::Signal<MouseButtonStateChangedDa
 
 struct CursorPositionChangedData
 {
-    engine::Window::Id id;
+    gfx::Window::Id id;
     double x;
     double y;
 };

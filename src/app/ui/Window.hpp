@@ -3,8 +3,8 @@
 #include <GLFW/glfw3.h>
 #include <vulkan/vulkan_core.h>
 
-#include <drip/engine/Window.hpp>
-#include <drip/engine/utils/Signals.hpp>
+#include <drip/gfx/Window.hpp>
+#include <drip/gfx/utils/Signals.hpp>
 #include <glm/ext/vector_uint2.hpp>
 #include <memory>
 #include <vector>
@@ -15,7 +15,7 @@
 namespace drip::app
 {
 
-class Window : public engine::Window
+class Window : public gfx::Window
 {
 public:
     [[nodiscard]] static auto makeId(GLFWwindow* window) -> Id;
@@ -49,7 +49,7 @@ private:
 
     std::unique_ptr<KeyboardHandler> _keyboardHandler;
     std::unique_ptr<MouseHandler> _mouseHandler;
-    engine::signal::FrameBufferResized::ReceiverT _frameBufferResizedReceiver;
+    gfx::signal::FrameBufferResized::ReceiverT _frameBufferResizedReceiver;
     GLFWwindow* _window;
     glm::uvec2 _size;
 };

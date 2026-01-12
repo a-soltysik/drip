@@ -1,5 +1,6 @@
 #pragma once
 
+#include <glm/vec3.hpp>
 #include <memory>
 
 #include "ExternalMemory.cuh"
@@ -17,7 +18,14 @@ public:
         std::unique_ptr<ExternalMemory> sizes;
     };
 
-    static auto create(SharedMemory sharedMemory) -> std::unique_ptr<Simulation>;
+    struct Domain
+    {
+        glm::vec3 min;
+        glm::vec3 max;
+        glm::uvec3 sampling;
+    };
+
+    static auto create(SharedMemory sharedMemory, Domain domain) -> std::unique_ptr<Simulation>;
 
     Simulation() = default;
     Simulation(const Simulation&) = delete;

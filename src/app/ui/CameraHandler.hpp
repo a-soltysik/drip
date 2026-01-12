@@ -1,7 +1,7 @@
 #pragma once
 #include "Window.hpp"
-#include "drip/engine/resource/MeshRenderable.hpp"
-#include "drip/engine/scene/Camera.hpp"
+#include "drip/gfx/resource/MeshRenderable.hpp"
+#include "drip/gfx/scene/Camera.hpp"
 
 namespace drip::app
 {
@@ -16,15 +16,15 @@ public:
     };
 
     explicit CameraHandler(const Window& window,
-                           engine::gfx::Camera& camera,
+                           gfx::Camera& camera,
                            const Config& config,
-                           const engine::gfx::Transform& initialTransform = {});
+                           const gfx::Transform& initialTransform = {});
     void update(float deltaTime, float aspectRatio);
 
 private:
     const Window& _window;
-    engine::gfx::Camera& _camera;
-    engine::gfx::Transform _transform;
+    gfx::Camera& _camera;
+    gfx::Transform _transform;
     Config _config;
 };
 
