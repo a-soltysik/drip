@@ -1,41 +1,51 @@
+#include <cuda_runtime_api.h>
 #include <thrust/device_ptr.h>
 #include <thrust/execution_policy.h>
 #include <thrust/fill.h>
 #include <thrust/host_vector.h>
+#include <vector_types.h>
 
+#include <cstddef>
 #include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/format/GlmFormatter.hpp>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/ext/vector_float4.hpp>
 #include <glm/gtx/string_cast.hpp>
 
 #include "Sph.cuh"
+#include "SphKernels.cuh"
 
 namespace drip::sim
 {
 
 Sph::Sph(SharedMemory sharedMemory, Domain domain)
-    : _sharedMemory(std::move(sharedMemory)),
-      _data {.positions = _sharedMemory.positions->toSpan<glm::vec4>(),
-             .colors = _sharedMemory.colors->toSpan<glm::vec4>(),
-             .sizes = _sharedMemory.sizes->toSpan<float>()}
+    : _sharedMemory {createSharedMemory(std::move(sharedMemory), domain)},
+      _internalMemory {createInternalMemory(_sharedMemory)},
+      _data {createFluidParticlesData(_sharedMemory, _internalMemory)},
+      _domain {domain}
 {
-    common::log::Info("Particle grid: {}", domain.sampling);
-
-    static constexpr auto spacing = 0.05F;
-    const auto violet = glm::vec4 {0.5F, 0.F, 1.F, 1.F};
-    const auto hostPositions = createParticlePositions(domain, _data.positions.size());
-    thrust::copy_n(hostPositions.begin(),
-                   _data.positions.size(),
-                   thrust::device_ptr<glm::vec4>(_data.positions.data()));
-    thrust::fill_n(thrust::device, _data.colors.data(), _data.colors.size(), violet);
-    thrust::fill_n(thrust::device, _data.sizes.data(), _data.sizes.size(), spacing);
-
-    common::log::Info("Sph simulation created with {} particles", _data.positions.size());
+    common::log::Info("Sph simulation created with {} particles", _data.count);
 }
 
-void Sph::update(float /*deltaTime*/) { }
+void Sph::update(float deltaTime)
+{
+    computeDensities();
+    computeExternalAccelerations();
+    computePressureAccelerations();
+    computeViscosityAccelerations();
+    computeSurfaceTensionAccelerations();
+
+    updateVelocities(deltaTime);
+    updatePositions(deltaTime);
+    updateColors();
+
+    cudaDeviceSynchronize();
+}
 
 auto Sph::createParticlePositions(Domain domain, size_t particleCount) -> thrust::host_vector<glm::vec4>
 {
+    common::log::Info("Particle grid: {}", domain.sampling);
+
     const auto domainSize = domain.max - domain.min;
     const auto spacing = domainSize / glm::vec3 {domain.sampling};
 
@@ -53,5 +63,86 @@ auto Sph::createParticlePositions(Domain domain, size_t particleCount) -> thrust
         }
     }
     return hostPositions;
+}
+
+auto Sph::createInternalMemory(const SharedMemory& sharedMemory) -> InternalMemory
+{
+    const auto particlesCount = sharedMemory.positions->getSize() / sizeof(glm::vec4);
+    return {.velocities = thrust::device_vector<glm::vec4>(particlesCount, glm::vec4 {}),
+            .accelerations = thrust::device_vector<glm::vec4>(particlesCount, glm::vec4 {}),
+            .densities = thrust::device_vector<float>(particlesCount, float {})};
+}
+
+auto Sph::createFluidParticlesData(const SharedMemory& sharedMemory, InternalMemory& internalMemory)
+    -> FluidParticlesData
+{
+    return {.positions = static_cast<glm::vec4*>(sharedMemory.positions->getData()),
+            .velocities = thrust::raw_pointer_cast(internalMemory.velocities.data()),
+            .accelerations = thrust::raw_pointer_cast(internalMemory.accelerations.data()),
+            .colors = static_cast<glm::vec4*>(sharedMemory.colors->getData()),
+            .sizes = static_cast<float*>(sharedMemory.sizes->getData()),
+            .densities = thrust::raw_pointer_cast(internalMemory.densities.data()),
+            .count = static_cast<uint32_t>(internalMemory.velocities.size())};
+}
+
+auto Sph::createSharedMemory(SharedMemory sharedMemory, Domain domain) -> SharedMemory
+{
+    const auto particlesCount = sharedMemory.positions->getSize() / sizeof(glm::vec4);
+    const auto hostPositions = createParticlePositions(domain, particlesCount);
+    static constexpr auto radius = 0.05F;
+    thrust::copy(hostPositions.begin(),
+                 hostPositions.end(),
+                 thrust::device_ptr<glm::vec4>(static_cast<glm::vec4*>(sharedMemory.positions->getData())));
+    thrust::fill_n(thrust::device,
+                   static_cast<glm::vec4*>(sharedMemory.colors->getData()),
+                   particlesCount,
+                   glm::vec4 {});
+    thrust::fill_n(thrust::device, static_cast<float*>(sharedMemory.sizes->getData()), particlesCount, radius);
+    return sharedMemory;
+}
+
+auto Sph::getBlocksPerGridForFluidParticles() const -> dim3
+{
+    return {(_data.count + threadsPerBlock - 1) / threadsPerBlock};
+}
+
+void Sph::computeExternalAccelerations() const
+{
+    kernel::computeExternalAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+}
+
+void Sph::computeDensities() const
+{
+    kernel::computeDensities<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+}
+
+void Sph::computePressureAccelerations() const
+{
+    kernel::computePressureAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+}
+
+void Sph::computeViscosityAccelerations() const
+{
+    kernel::computeViscosityAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+}
+
+void Sph::computeSurfaceTensionAccelerations() const
+{
+    kernel::computeSurfaceTensionAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+}
+
+void Sph::updateVelocities(float deltaTime) const
+{
+    kernel::updateVelocities<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data, deltaTime);
+}
+
+void Sph::updatePositions(float deltaTime) const
+{
+    kernel::updatePositions<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data, _domain, deltaTime);
+}
+
+void Sph::updateColors() const
+{
+    kernel::updateColors<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
 }
 }
