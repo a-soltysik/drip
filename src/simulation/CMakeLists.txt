@@ -10,6 +10,7 @@ target_sources(
         src/ExternalMemory.cu
         src/Simulation.cu
         src/Sph.cu
+        src/SphKernels.cu
 )
 
 target_include_directories(drip_sim
