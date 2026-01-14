@@ -3,6 +3,7 @@ function(drip_setup_dependencies)
     CPMAddPackage("gh:fmtlib/fmt#12.1.0")
     CPMAddPackage("gh:g-truc/glm#1.0.2")
     CPMAddPackage("gh:glfw/glfw#3.4")
+    CPMAddPackage("gh:nlohmann/json@3.12.0")
     CPMAddPackage(
             NAME Boost
             VERSION 1.90.0

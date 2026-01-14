@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "ExternalMemory.cuh"
+#include "SimulationConfig.cuh"
 
 namespace drip::sim
 {
@@ -18,14 +19,7 @@ public:
         std::unique_ptr<ExternalMemory> sizes;
     };
 
-    struct Domain
-    {
-        glm::vec3 min;
-        glm::vec3 max;
-        glm::uvec3 sampling;
-    };
-
-    static auto create(SharedMemory sharedMemory, Domain domain) -> std::unique_ptr<Simulation>;
+    static auto create(SharedMemory sharedMemory, const SimulationConfig& parameters) -> std::unique_ptr<Simulation>;
 
     Simulation() = default;
     Simulation(const Simulation&) = delete;
