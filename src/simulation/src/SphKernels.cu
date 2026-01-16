@@ -11,6 +11,7 @@
 #include "SimulationParameters.cuh"
 #include "Sph.cuh"
 #include "SphKernels.cuh"
+#include "Utils.cuh"
 #include "WendlandKernel.cuh"
 #include "drip/simulation/Simulation.cuh"
 
@@ -245,8 +246,11 @@ __global__ void updateColors(Sph::FluidParticlesData particles)
         return;
     }
 
-    static constexpr auto violet = float3 {.x = 0.5F, .y = 0.F, .z = 1.F};
-    particles.colors[idx] = glm::vec4 {violet.x, violet.y, violet.z, 0.F};
+    const auto velocity = particles.velocities[idx];
+    const auto speed = glm::length(velocity);
+    const auto normalizedSpeed = speed / constant::simulationParameters.fluid.properties.maxVelocity;
+    const auto color = utils::turboColormap(normalizedSpeed);
+    particles.colors[idx] = glm::vec4 {color, 0.0F};
 }
 
 }

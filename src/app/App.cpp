@@ -103,7 +103,7 @@ void App::mainLoop() const
 
             _cameraHandler->update(timeManager.getDelta(), _gfxContext->getAspectRatio());
 
-            _simulation->update(timeManager.getDelta());
+            _simulation->update(0.001F);
 
             _gfxContext->makeFrame(_scene->getGfxScene());
         }
