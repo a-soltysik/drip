@@ -32,7 +32,7 @@ public:
     template <typename T>
     auto withException(const T& exception) -> LogMessageBuilder&
     {
-        return withStacktraceFromCurrentException(boost::make_exception_ptr(exception));
+        return withCurrentException(boost::make_exception_ptr(exception));
     }
 
     auto withCurrentException(boost::exception_ptr exception = boost::current_exception()) -> LogMessageBuilder&;

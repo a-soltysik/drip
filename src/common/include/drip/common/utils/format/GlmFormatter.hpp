@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fmt/base.h>
+#include <fmt/core.h>
 
 #include <glm/detail/qualifier.hpp>
 #include <glm/gtx/string_cast.hpp>

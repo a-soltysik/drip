@@ -2,15 +2,22 @@
 
 #include "App.hpp"
 
-auto main(int /*argc*/, char** /*argv*/) -> int
+auto main(int argc, char** argv) -> int
 {
     try
     {
-        drip::app::App {}.run();
+        if (argc > 1)
+        {
+            drip::app::App {}.run(argv[1]);  //NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        }
+        else
+        {
+            drip::app::App {}.run({});
+        }
     }
     catch (...)
     {
-        drip::common::log::Debug("Unhandled critical exception")
+        drip::common::log::Error("Unhandled critical exception")
             .withCurrentException()
             .withStacktraceFromCurrentException();
         return -1;

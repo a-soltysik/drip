@@ -40,6 +40,7 @@ target_link_system_libraries(
         glfw
         glm::glm
         imgui
+        nlohmann_json
         Vulkan::Vulkan)
 
 target_include_directories(drip PRIVATE ${CMAKE_CURRENT_LIST_DIR})

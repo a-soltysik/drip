@@ -45,9 +45,9 @@ void Camera::setViewDirection(const view::Direction& view)
     const auto position = glm::vec3 {view.position.x, -view.position.y, view.position.z};
     const auto direction = glm::vec3 {view.direction.x, -view.direction.y, view.direction.z};
 
-    const auto wVec = glm::vec3 {glm::normalize(direction)};
-    const auto uVec = glm::vec3 {glm::normalize(glm::cross(wVec, view.up))};
-    const auto vVec = glm::vec3 {glm::cross(wVec, uVec)};
+    const auto wVec = glm::normalize(direction);
+    const auto uVec = glm::normalize(glm::cross(wVec, view.up));
+    const auto vVec = glm::cross(wVec, uVec);
 
     _viewMatrix = glm::mat4 {1.F};
     _viewMatrix[0][0] = uVec.x;

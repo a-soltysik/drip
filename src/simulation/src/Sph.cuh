@@ -1,10 +1,15 @@
 #pragma once
 #include <thrust/device_vector.h>
 #include <thrust/host_vector.h>
+#include <vector_types.h>
 
+#include <cstdint>
+#include <glm/ext/vector_float4.hpp>
 #include <glm/vec4.hpp>
 
+#include "SimulationParameters.cuh"
 #include "drip/simulation/Simulation.cuh"
+#include "drip/simulation/SimulationConfig.cuh"
 
 namespace drip::sim
 {
@@ -22,7 +27,7 @@ public:
         uint32_t count;
     };
 
-    explicit Sph(SharedMemory sharedMemory, Domain domain);
+    explicit Sph(SharedMemory sharedMemory, const SimulationConfig& parameters);
 
     void update(float deltaTime) override;
 
@@ -34,11 +39,12 @@ private:
         thrust::device_vector<float> densities;
     };
 
-    static auto createParticlePositions(Domain domain, size_t particleCount) -> thrust::host_vector<glm::vec4>;
+    static auto createParticlePositions(const SimulationConfig& parameters) -> thrust::host_vector<glm::vec4>;
     static auto createInternalMemory(const SharedMemory& sharedMemory) -> InternalMemory;
     static auto createFluidParticlesData(const SharedMemory& sharedMemory, InternalMemory& internalMemory)
         -> FluidParticlesData;
-    static auto createSharedMemory(SharedMemory sharedMemory, Domain domain) -> SharedMemory;
+    static auto createSharedMemory(SharedMemory sharedMemory, const SimulationConfig& parameters) -> SharedMemory;
+    static auto createSphParameters(const SimulationConfig& parameters) -> SimulationParameters;
 
     static constexpr auto threadsPerBlock = 256;
 
@@ -55,6 +61,6 @@ private:
     SharedMemory _sharedMemory;
     InternalMemory _internalMemory;
     FluidParticlesData _data;
-    Domain _domain;
+    SimulationParameters _parameters;
 };
 }

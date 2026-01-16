@@ -9,15 +9,20 @@
 #include <drip/common/log/Logger.hpp>
 #include <drip/common/log/sink/ConsoleSink.hpp>
 #include <drip/common/log/sink/FileSink.hpp>
+#include <drip/common/utils/format/GlmFormatter.hpp>  //NOLINT(misc-include-cleaner)
 #include <drip/gfx/resource/MeshRenderable.hpp>
 #include <drip/gfx/resource/ParticlesRenderable.hpp>
 #include <drip/gfx/vulkan/core/Context.hpp>
 #include <drip/simulation/ExternalMemory.cuh>
 #include <drip/simulation/Simulation.cuh>
+#include <drip/simulation/SimulationConfig.cuh>
+#include <filesystem>
 #include <glm/ext/vector_float4.hpp>
 #include <glm/ext/vector_uint2.hpp>
 #include <memory>
+#include <optional>
 
+#include "config/JsonFileReader.hpp"
 #include "ui/CameraHandler.hpp"
 #include "ui/Window.hpp"
 #include "ui/panel/StatisticsPanel.hpp"
@@ -29,15 +34,21 @@
 namespace drip::app
 {
 
-void App::run()
+void App::run(std::optional<std::filesystem::path> configurationFile)
 {
     utils::registerSystemSignalHandlers();
     initializeLogger();
 
+    const auto simulationParameters = configurationFile
+                                          .and_then([](const auto& filePath) {
+                                              return readJsonFile<sim::SimulationConfig>(filePath);
+                                          })
+                                          .value_or(sim::defaultSimulationParameters);
+
     _window = std::make_unique<Window>(glm::uvec2 {1280, 720}, "drip::app");
-    _api = std::make_unique<gfx::Context>(*_window);
-    _api->getGuiManager().addPanel<StatisticsPanel>();
-    _scene = utils::Scene::createDefaultScene(*_api);
+    _gfxContext = std::make_unique<gfx::Context>(*_window);
+    _gfxContext->getGuiManager().addPanel<StatisticsPanel>();
+    _scene = utils::Scene::createDefaultScene(*_gfxContext, simulationParameters);
     _cameraHandler = std::make_unique<CameraHandler>(*_window,
                                                      _scene->getGfxScene().getCamera(),
                                                      CameraHandler::Config {
@@ -49,13 +60,12 @@ void App::run()
     const auto& fluidParticles = _scene->getFluidParticles();
     const auto sharedBuffer = fluidParticles.getDataBuffer();
     const auto particleCount = fluidParticles.getSize();
-    const auto domain = _scene->getDomain();
     _simulation = sim::Simulation::create(
         sim::Simulation::SharedMemory {
             .positions = sim::ExternalMemory::create(sharedBuffer.translations, particleCount * sizeof(glm::vec4)),
             .colors = sim::ExternalMemory::create(sharedBuffer.colors, particleCount * sizeof(glm::vec4)),
             .sizes = sim::ExternalMemory::create(sharedBuffer.sizes, particleCount * sizeof(float))},
-        {.min = domain.min, .max = domain.max, .sampling = domain.sampling});
+        simulationParameters);
     mainLoop();
 }
 
@@ -91,11 +101,11 @@ void App::mainLoop() const
 
             timeManager.update();
 
-            _cameraHandler->update(timeManager.getDelta(), _api->getAspectRatio());
+            _cameraHandler->update(timeManager.getDelta(), _gfxContext->getAspectRatio());
 
             _simulation->update(timeManager.getDelta());
 
-            _api->makeFrame(_scene->getGfxScene());
+            _gfxContext->makeFrame(_scene->getGfxScene());
         }
         else [[unlikely]]
         {
