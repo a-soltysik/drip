@@ -30,18 +30,9 @@ runs:
         version: 1.4.328.1
         cache: true
 
-    - name: Install CUDA Toolkit (Windows)
-      if: runner.os == 'Windows'
-      uses: Jimver/cuda-toolkit@v0.2.24
+    - name: Install CUDA Toolkit
+      uses: Jimver/cuda-toolkit@v0.2.30
       with:
         method: network
-        sub-packages: '["nvcc", "cudart", "thrust"]'
-        log-file-suffix: '${{github.job}}-${{ inputs.preset }}.txt'
-
-    - name: Install CUDA Toolkit (Linux)
-      if: runner.os == 'Linux'
-      uses: Jimver/cuda-toolkit@v0.2.29
-      with:
-        method: network
-        sub-packages: '["nvcc", "cudart", "thrust"]'
+        cuda: 13.0.0
         log-file-suffix: '${{github.job}}-${{ inputs.preset }}.txt'

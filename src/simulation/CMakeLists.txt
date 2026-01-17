@@ -40,7 +40,6 @@ drip_target_link_cuda(drip_sim)
 target_compile_definitions(drip_sim
         PRIVATE
         GLM_ENABLE_EXPERIMENTAL
-        $<$<PLATFORM_ID:Windows>:FMT_UNICODE=0>
 )
 
 set_target_properties(drip_sim PROPERTIES FOLDER "Libraries")
