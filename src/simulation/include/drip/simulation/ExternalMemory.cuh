@@ -2,7 +2,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <span>
 
 namespace drip::sim
 {
@@ -24,12 +23,6 @@ public:
     auto operator=(const ExternalMemory&) = delete;
     auto operator=(ExternalMemory&&) = delete;
     virtual ~ExternalMemory() noexcept = default;
-
-    template <typename T>
-    [[nodiscard]] auto toSpan() const noexcept -> std::span<T>
-    {
-        return std::span {static_cast<T*>(getData()), getSize() / sizeof(T)};
-    }
 
     [[nodiscard]] virtual auto getData() const -> void* = 0;
     [[nodiscard]] virtual auto getSize() const -> size_t = 0;

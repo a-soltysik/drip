@@ -13,6 +13,7 @@
 #include <glm/ext/vector_uint3.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include "NeighborKernels.cuh"
 #include "SimulationParameters.cuh"
 #include "Sph.cuh"
 #include "SphKernels.cuh"
@@ -27,7 +28,8 @@ Sph::Sph(SharedMemory sharedMemory, const SimulationConfig& parameters)
     : _sharedMemory {createSharedMemory(std::move(sharedMemory), parameters)},
       _internalMemory {createInternalMemory(_sharedMemory)},
       _data {createFluidParticlesData(_sharedMemory, _internalMemory)},
-      _parameters {createSphParameters(parameters)}
+      _parameters {createSphParameters(parameters)},
+      _grid {_parameters.domain, 2.F * _parameters.fluid.properties.particle.smoothingRadius, _data.count}
 {
     common::log::Info("Sph simulation created with {} particles and configuration:\n{}", _data.count, _parameters);
 }
@@ -35,6 +37,7 @@ Sph::Sph(SharedMemory sharedMemory, const SimulationConfig& parameters)
 void Sph::update(float deltaTime)
 {
     uploadSimulationParameters(_parameters);
+    updateGrid();
     computeDensities();
     computeExternalAccelerations();
     computePressureAccelerations();
@@ -158,24 +161,30 @@ void Sph::computeExternalAccelerations() const
     kernel::computeExternalAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
 }
 
-void Sph::computeDensities() const
+void Sph::computeDensities()
 {
-    kernel::computeDensities<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+    kernel::computeDensities<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data, _grid.toDeviceView());
 }
 
-void Sph::computePressureAccelerations() const
+void Sph::computePressureAccelerations()
 {
-    kernel::computePressureAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+    kernel::computePressureAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(
+        _data,
+        _grid.toDeviceView());
 }
 
-void Sph::computeViscosityAccelerations() const
+void Sph::computeViscosityAccelerations()
 {
-    kernel::computeViscosityAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+    kernel::computeViscosityAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(
+        _data,
+        _grid.toDeviceView());
 }
 
-void Sph::computeSurfaceTensionAccelerations() const
+void Sph::computeSurfaceTensionAccelerations()
 {
-    kernel::computeSurfaceTensionAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+    kernel::computeSurfaceTensionAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(
+        _data,
+        _grid.toDeviceView());
 }
 
 void Sph::updateVelocities(float deltaTime) const
@@ -191,5 +200,10 @@ void Sph::updatePositions(float deltaTime) const
 void Sph::updateColors() const
 {
     kernel::updateColors<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+}
+
+void Sph::updateGrid()
+{
+    _grid.update({getBlocksPerGridForFluidParticles(), threadsPerBlock}, _data.positions, _data.count);
 }
 }

@@ -7,6 +7,7 @@
 #include <glm/ext/vector_float4.hpp>
 #include <glm/vec4.hpp>
 
+#include "NeighborGrid.cuh"
 #include "SimulationParameters.cuh"
 #include "drip/simulation/Simulation.cuh"
 #include "drip/simulation/SimulationConfig.cuh"
@@ -50,17 +51,19 @@ private:
 
     [[nodiscard]] auto getBlocksPerGridForFluidParticles() const -> dim3;
     void computeExternalAccelerations() const;
-    void computeDensities() const;
-    void computePressureAccelerations() const;
-    void computeViscosityAccelerations() const;
-    void computeSurfaceTensionAccelerations() const;
+    void computeDensities();
+    void computePressureAccelerations();
+    void computeViscosityAccelerations();
+    void computeSurfaceTensionAccelerations();
     void updateVelocities(float deltaTime) const;
     void updatePositions(float deltaTime) const;
     void updateColors() const;
+    void updateGrid();
 
     SharedMemory _sharedMemory;
     InternalMemory _internalMemory;
     FluidParticlesData _data;
     SimulationParameters _parameters;
+    NeighborGrid _grid;
 };
 }
