@@ -8,6 +8,8 @@ target_sources(
         PRIVATE
         src/CudaExternalMemory.cu
         src/ExternalMemory.cu
+        src/NeighborGrid.cu
+        src/NeighborKernels.cu
         src/Simulation.cu
         src/Sph.cu
         src/SphKernels.cu

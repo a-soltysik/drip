@@ -9,7 +9,6 @@
 
 #include "drip/simulation/SimulationConfig.cuh"
 
-
 namespace drip::sim
 {
 
@@ -42,6 +41,11 @@ struct SimulationParameters
     struct Domain
     {
         Bounds bounds;
+
+        [[nodiscard]] auto getSize() const noexcept -> glm::vec3
+        {
+            return bounds.max - bounds.min;
+        }
     };
 
     Domain domain;
