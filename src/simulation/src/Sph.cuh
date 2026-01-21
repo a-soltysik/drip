@@ -3,8 +3,6 @@
 #include <thrust/host_vector.h>
 #include <vector_types.h>
 
-#include <cstdint>
-#include <glm/ext/vector_float4.hpp>
 #include <glm/vec4.hpp>
 
 #include "NeighborGrid.cuh"
@@ -25,7 +23,6 @@ public:
         glm::vec4* colors;
         float* sizes;
         float* densities;
-        uint32_t count;
     };
 
     explicit Sph(SharedMemory sharedMemory, const SimulationConfig& parameters);

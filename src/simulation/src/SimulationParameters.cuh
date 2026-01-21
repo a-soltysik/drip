@@ -3,8 +3,6 @@
 #include <fmt/base.h>
 
 #include <drip/common/utils/format/GlmFormatter.hpp>
-#include <glm/ext/vector_float3.hpp>
-#include <glm/vec3.hpp>
 #include <string_view>
 
 #include "drip/simulation/SimulationConfig.cuh"
@@ -30,6 +28,7 @@ struct Fluid
         float viscosity;
         float maxVelocity;
         float speedOfSound;
+        uint32_t particleCount;
     };
 
     Bounds bounds;

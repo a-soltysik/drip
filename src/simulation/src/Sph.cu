@@ -5,15 +5,10 @@
 #include <thrust/host_vector.h>
 #include <vector_types.h>
 
-#include <cstddef>
 #include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/format/GlmFormatter.hpp>
-#include <glm/ext/vector_float3.hpp>
-#include <glm/ext/vector_float4.hpp>
-#include <glm/ext/vector_uint3.hpp>
 #include <glm/gtx/string_cast.hpp>
 
-#include "NeighborKernels.cuh"
 #include "SimulationParameters.cuh"
 #include "Sph.cuh"
 #include "SphKernels.cuh"
@@ -29,14 +24,18 @@ Sph::Sph(SharedMemory sharedMemory, const SimulationConfig& parameters)
       _internalMemory {createInternalMemory(_sharedMemory)},
       _data {createFluidParticlesData(_sharedMemory, _internalMemory)},
       _parameters {createSphParameters(parameters)},
-      _grid {_parameters.domain, 2.F * _parameters.fluid.properties.particle.smoothingRadius, _data.count}
+      _grid {_parameters.domain,
+             2.F * _parameters.fluid.properties.particle.smoothingRadius,
+             _parameters.fluid.properties.particleCount}
 {
-    common::log::Info("Sph simulation created with {} particles and configuration:\n{}", _data.count, _parameters);
+    uploadFluidParticlesData(_data);
+    common::log::Info("Sph simulation created with {} particles and configuration:\n{}",
+                      _parameters.fluid.properties.particleCount,
+                      _parameters);
 }
 
 void Sph::update(float deltaTime)
 {
-    uploadSimulationParameters(_parameters);
     updateGrid();
     computeDensities();
     computeExternalAccelerations();
@@ -92,8 +91,7 @@ auto Sph::createFluidParticlesData(const SharedMemory& sharedMemory, InternalMem
             .accelerations = thrust::raw_pointer_cast(internalMemory.accelerations.data()),
             .colors = static_cast<glm::vec4*>(sharedMemory.colors->getData()),
             .sizes = static_cast<float*>(sharedMemory.sizes->getData()),
-            .densities = thrust::raw_pointer_cast(internalMemory.densities.data()),
-            .count = static_cast<uint32_t>(internalMemory.velocities.size())};
+            .densities = thrust::raw_pointer_cast(internalMemory.densities.data())};
 }
 
 auto Sph::createSharedMemory(SharedMemory sharedMemory, const SimulationConfig& parameters) -> SharedMemory
@@ -132,78 +130,80 @@ auto Sph::createSphParameters(const SimulationConfig& parameters) -> SimulationP
                       {
                           .min = parameters.fluid.bounds.min,
                           .max = parameters.fluid.bounds.max,
-                      }, .properties =
-                      {
-                          .particle = {.mass = particleMass,
-                                       .radius = parameters.fluid.properties.spacing / 2,
-                                       .smoothingRadius = parameters.fluid.properties.smoothingRadius,
-                                       .neighborSearchRangeSquared = device::constant::wendlandRangeRatio *
-                                                                     device::constant::wendlandRangeRatio *
-                                                                     parameters.fluid.properties.smoothingRadius *
-                                                                     parameters.fluid.properties.smoothingRadius},
-                          .density = parameters.fluid.properties.density,
-                          .surfaceTension = parameters.fluid.properties.surfaceTension,
-                          .viscosity = parameters.fluid.properties.viscosity,
-                          .maxVelocity = parameters.fluid.properties.maxVelocity,
-                          .speedOfSound = parameters.fluid.properties.speedOfSound,
-                      }},
+                      }, .properties = {.particle = {.mass = particleMass,
+                                              .radius = parameters.fluid.properties.spacing / 2,
+                                              .smoothingRadius = parameters.fluid.properties.smoothingRadius,
+                                              .neighborSearchRangeSquared =
+                                                  device::constant::wendlandRangeRatio *
+                                                  device::constant::wendlandRangeRatio *
+                                                  parameters.fluid.properties.smoothingRadius *
+                                                  parameters.fluid.properties.smoothingRadius},
+                                 .density = parameters.fluid.properties.density,
+                                 .surfaceTension = parameters.fluid.properties.surfaceTension,
+                                 .viscosity = parameters.fluid.properties.viscosity,
+                                 .maxVelocity = parameters.fluid.properties.maxVelocity,
+                                 .speedOfSound = parameters.fluid.properties.speedOfSound,
+                                 .particleCount = particleCount}},
         .gravity = parameters.gravity
     };
 }
 
 auto Sph::getBlocksPerGridForFluidParticles() const -> dim3
 {
-    return {(_data.count + threadsPerBlock - 1) / threadsPerBlock};
+    return {(_parameters.fluid.properties.particleCount + threadsPerBlock - 1) / threadsPerBlock};
 }
 
 void Sph::computeExternalAccelerations() const
 {
-    kernel::computeExternalAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+    kernel::computeExternalAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_parameters);
 }
 
 void Sph::computeDensities()
 {
-    kernel::computeDensities<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data, _grid.toDeviceView());
+    kernel::computeDensities<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_parameters,
+                                                                                       _grid.toDeviceView());
 }
 
 void Sph::computePressureAccelerations()
 {
     kernel::computePressureAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(
-        _data,
+        _parameters,
         _grid.toDeviceView());
 }
 
 void Sph::computeViscosityAccelerations()
 {
     kernel::computeViscosityAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(
-        _data,
+        _parameters,
         _grid.toDeviceView());
 }
 
 void Sph::computeSurfaceTensionAccelerations()
 {
     kernel::computeSurfaceTensionAccelerations<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(
-        _data,
+        _parameters,
         _grid.toDeviceView());
 }
 
 void Sph::updateVelocities(float deltaTime) const
 {
-    kernel::updateVelocities<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data, deltaTime);
+    kernel::updateVelocities<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_parameters, deltaTime);
 }
 
 void Sph::updatePositions(float deltaTime) const
 {
-    kernel::updatePositions<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data, deltaTime);
+    kernel::updatePositions<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_parameters, deltaTime);
 }
 
 void Sph::updateColors() const
 {
-    kernel::updateColors<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_data);
+    kernel::updateColors<<<getBlocksPerGridForFluidParticles(), threadsPerBlock>>>(_parameters);
 }
 
 void Sph::updateGrid()
 {
-    _grid.update({getBlocksPerGridForFluidParticles(), threadsPerBlock}, _data.positions, _data.count);
+    _grid.update({.blocksPerGrid = getBlocksPerGridForFluidParticles(), .threadsPerBlock = threadsPerBlock},
+                 _data.positions,
+                 _parameters.fluid.properties.particleCount);
 }
 }

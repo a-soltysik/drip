@@ -48,9 +48,7 @@ CUDA-based fluid simulation implementing WCSPH algorithm.
 - Surface tension via cohesion forces
 
 **CUDA Configuration:**
-- 256 threads per block
 - Thrust library for device vectors and sorting
-- `__constant__` memory for simulation parameters
 - External memory support for Vulkan interop
 
 ### `src/gfx/` - Vulkan Graphics (drip::gfx)
@@ -158,28 +156,7 @@ Managed via CPM (CMake Package Manager):
 - clang-tidy with extensive checks (see `.clang-tidy`)
 - cppcheck
 
-## Key Patterns
-
-### Signal/Slot System
-```cpp
-// Declaration
-common::signal::Signal<> mainLoopIterationStarted;
-
-// Connection
-auto receiver = signal.connect([](){ /* handler */ });
-
-// Emission
-signal.registerSender()();
-```
-
-### Logging
-```cpp
-common::log::Info("Message with {} format", value);
-common::log::Error("Error!").withCurrentException().withStacktraceFromCurrentException();
-```
-
 ### CUDA Kernels
-- Parameters via `__constant__` memory
 - Standard pattern: check bounds, compute per-particle
 - Neighbor iteration via `NeighborGrid::DeviceView::forEachFluidNeighbor()`
 
@@ -187,14 +164,6 @@ common::log::Error("Error!").withCurrentException().withStacktraceFromCurrentExc
 - `ParticlesRenderable` creates shared Vulkan buffers
 - `ExternalMemory` wraps platform-specific handles (HANDLE on Windows, fd on Linux)
 - Simulation writes directly to shared memory, no CPU round-trip
-
-## CI/CD
-
-GitHub Actions workflows:
-- `build.yml` - Build on Linux with GCC
-- `formatting.yml` - Check clang-format
-- `static-analysis.yml` - Run clang-tidy and cppcheck
-- `claude.yml` / `claude-code-review.yml` - AI-assisted code review
 
 ## Architecture Notes
 
