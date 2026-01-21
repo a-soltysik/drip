@@ -1,3 +1,7 @@
+#pragma once
+
+#include <thrust/device_vector.h>
+
 namespace drip::sim
 {
 
