@@ -14,7 +14,8 @@ namespace drip::app
 class App
 {
 public:
-    void run(std::optional<std::filesystem::path> configurationFile);
+    explicit App(std::optional<std::filesystem::path> configurationFile);
+    void run() const;
 
 private:
     static void initializeLogger();

@@ -69,8 +69,8 @@ private:
     static auto getCellCount(const glm::ivec3& gridSize) -> uint32_t;
     static void resetGrid(ParticleIndexData& data);
     static void sortParticles(ParticleIndexData& data);
-    static void assignParticlesToCells(const KernelLaunchConfig& runData, glm::vec4* positions);
-    static void calculateCellStartAndEndIndices(const KernelLaunchConfig& runData);
+    void assignParticlesToCells(const KernelLaunchConfig& runData, glm::vec4* positions);
+    void calculateCellStartAndEndIndices(const KernelLaunchConfig& runData);
 
     SimulationParameters::Domain _domain;
     Grid _grid;

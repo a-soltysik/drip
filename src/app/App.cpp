@@ -34,7 +34,7 @@
 namespace drip::app
 {
 
-void App::run(std::optional<std::filesystem::path> configurationFile)
+App::App(std::optional<std::filesystem::path> configurationFile)
 {
     utils::registerSystemSignalHandlers();
     initializeLogger();
@@ -66,6 +66,10 @@ void App::run(std::optional<std::filesystem::path> configurationFile)
             .colors = sim::ExternalMemory::create(sharedBuffer.colors, particleCount * sizeof(glm::vec4)),
             .sizes = sim::ExternalMemory::create(sharedBuffer.sizes, particleCount * sizeof(float))},
         simulationParameters);
+}
+
+void App::run() const
+{
     mainLoop();
 }
 
@@ -103,7 +107,7 @@ void App::mainLoop() const
 
             _cameraHandler->update(timeManager.getDelta(), _gfxContext->getAspectRatio());
 
-            _simulation->update(0.001F);
+            _simulation->update(_simulation->getCflTimestep());
 
             _gfxContext->makeFrame(_scene->getGfxScene());
         }

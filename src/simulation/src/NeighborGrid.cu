@@ -17,7 +17,6 @@ NeighborGrid::NeighborGrid(const SimulationParameters::Domain& domain, float cel
 void NeighborGrid::update(const KernelLaunchConfig& runData, glm::vec4* positions, uint32_t fluidParticleCount)
 {
     _fluidIndexData.particleCount = fluidParticleCount;
-    uploadNeighborGrid(toDeviceView());
     resetGrid(_fluidIndexData);
     assignParticlesToCells(runData, positions);
     sortParticles(_fluidIndexData);
@@ -61,7 +60,7 @@ void NeighborGrid::resetGrid(ParticleIndexData& data)
 
 void NeighborGrid::assignParticlesToCells(const KernelLaunchConfig& runData, glm::vec4* positions)
 {
-    kernel::assignParticlesToCells<<<runData.blocksPerGrid, runData.threadsPerBlock>>>(positions);
+    kernel::assignParticlesToCells<<<runData.blocksPerGrid, runData.threadsPerBlock>>>(toDeviceView(), positions);
 }
 
 void NeighborGrid::sortParticles(ParticleIndexData& data)
@@ -73,7 +72,7 @@ void NeighborGrid::sortParticles(ParticleIndexData& data)
 
 void NeighborGrid::calculateCellStartAndEndIndices(const KernelLaunchConfig& runData)
 {
-    kernel::calculateCellStartAndEndIndices<<<runData.blocksPerGrid, runData.threadsPerBlock>>>();
+    kernel::calculateCellStartAndEndIndices<<<runData.blocksPerGrid, runData.threadsPerBlock>>>(toDeviceView());
 }
 
 auto NeighborGrid::toDeviceView() -> DeviceView
