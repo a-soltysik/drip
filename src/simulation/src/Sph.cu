@@ -3,12 +3,14 @@
 #include <thrust/execution_policy.h>
 #include <thrust/fill.h>
 #include <thrust/host_vector.h>
+#include <thrust/system/detail/generic/extrema.h>
 #include <vector_types.h>
 
 #include <drip/common/log/LogMessageBuilder.hpp>
 #include <drip/common/utils/format/GlmFormatter.hpp>
 #include <glm/gtx/string_cast.hpp>
 
+#include "DeviceView.cuh"
 #include "SimulationParameters.cuh"
 #include "Sph.cuh"
 #include "SphKernels.cuh"
@@ -48,6 +50,21 @@ void Sph::update(float deltaTime)
     updateColors();
 
     cudaDeviceSynchronize();
+}
+
+auto Sph::getCflTimestep() -> float
+{
+    static constexpr auto cflConstant = 0.25F;
+    const auto maxVelocity = DeviceView<glm::vec4>::fromDevice(
+                                 thrust::max_element(thrust::device,
+                                                     _data.velocities,
+                                                     _data.velocities + _parameters.fluid.properties.particleCount,
+                                                     [] __device__(const auto a, const auto b) {
+                                                         return glm::dot(a, a) < glm::dot(b, b);
+                                                     }))
+                                 .toHost();
+    return cflConstant * _parameters.fluid.properties.particle.smoothingRadius /
+           (_parameters.fluid.properties.speedOfSound + glm::length(maxVelocity));
 }
 
 auto Sph::createParticlePositions(const SimulationConfig& parameters) -> thrust::host_vector<glm::vec4>

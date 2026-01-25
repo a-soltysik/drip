@@ -8,11 +8,11 @@ auto main(int argc, char** argv) -> int
     {
         if (argc > 1)
         {
-            drip::app::App {}.run(argv[1]);  //NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            drip::app::App {argv[1]}.run();  //NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         }
         else
         {
-            drip::app::App {}.run({});
+            drip::app::App {{}}.run();
         }
     }
     catch (...)

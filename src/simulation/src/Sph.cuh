@@ -28,6 +28,7 @@ public:
     explicit Sph(SharedMemory sharedMemory, const SimulationConfig& parameters);
 
     void update(float deltaTime) override;
+    auto getCflTimestep() -> float override;
 
 private:
     struct InternalMemory

@@ -28,6 +28,7 @@ public:
     auto operator=(Simulation&&) = delete;
     virtual ~Simulation() noexcept = default;
     virtual void update(float deltaTime) = 0;
+    virtual auto getCflTimestep() -> float = 0;
 };
 
 }
