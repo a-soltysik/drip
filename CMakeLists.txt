@@ -40,6 +40,9 @@ add_library(drip::warnings ALIAS drip_warnings)
 
 add_subdirectory(src)
 
+enable_testing()
+add_subdirectory(tests)
+
 if (MSVC)
     get_all_installable_targets(all_targets)
     set_target_properties(${all_targets} PROPERTIES VS_DEBUGGER_ENVIRONMENT "PATH=$(VC_ExecutablePath_x64);%PATH%")

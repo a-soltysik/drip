@@ -39,11 +39,12 @@ App::App(std::optional<std::filesystem::path> configurationFile)
     utils::registerSystemSignalHandlers();
     initializeLogger();
 
-    const auto simulationParameters = configurationFile
-                                          .and_then([](const auto& filePath) {
-                                              return readJsonFile<sim::SimulationConfig>(filePath);
-                                          })
-                                          .value_or(sim::defaultSimulationParameters);
+    const auto simulationParameters =
+        configurationFile
+            .and_then([](const auto& filePath) {
+                return readJsonFile<sim::SimulationConfig>(filePath, "simulation_config.schema.json");
+            })
+            .value_or(sim::SimulationConfig {});
 
     _window = std::make_unique<Window>(glm::uvec2 {1280, 720}, "drip::app");
     _gfxContext = std::make_unique<gfx::Context>(*_window);
