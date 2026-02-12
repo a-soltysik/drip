@@ -1,6 +1,6 @@
 #include <drip/common/log/LogMessageBuilder.hpp>
 
-#include "App.hpp"
+#include "app/App.hpp"
 
 auto main(int argc, char** argv) -> int
 {

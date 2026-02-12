@@ -161,7 +161,7 @@ auto Sph::createSphParameters(const SimulationConfig& parameters) -> SimulationP
                                  .maxVelocity = parameters.fluid.properties.maxVelocity,
                                  .speedOfSound = parameters.fluid.properties.speedOfSound,
                                  .particleCount = particleCount}},
-        .gravity = parameters.gravity
+        .gravity = parameters.environment.gravity
     };
 }
 
