@@ -32,20 +32,13 @@ jobs:
         uses: ./.github/actions/setup-build-env
         with:
           preset: ${{ matrix.config.preset }}
+          compiler: ${{ matrix.config.compiler }}
+          vcvarsall: ${{ contains(matrix.config.os, 'windows') }}
 
       - name: Setup Cache
         uses: ./.github/actions/setup-cache
         with:
           preset: ${{ matrix.config.preset }}
-
-      - name: Setup Cpp
-        uses: aminya/setup-cpp@v1.7.1
-        with:
-          compiler: ${{ matrix.config.compiler }}
-          vcvarsall: ${{ contains(matrix.config.os, 'windows' )}}
-          cmake: true
-          ninja: true
-          ccache: true
 
       - name: Configure
         run: cmake --preset ${{ matrix.config.preset }}

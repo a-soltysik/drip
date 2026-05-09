@@ -29,8 +29,7 @@ public:
 private:
     friend class Sender<Args...>;
 
-    template <std::convertible_to<Args>... Params>
-    auto emit(const Params&... params) const
+    auto emit(const Args&... params) const
     {
         for ([[maybe_unused]] auto& [key, value] : _connections)
         {
@@ -113,8 +112,7 @@ public:
     auto operator=(Sender&&) noexcept -> Sender& = default;
     ~Sender() = default;
 
-    template <std::convertible_to<Args>... Params>
-    auto operator()(const Params&... params) const
+    auto operator()(const Args&... params) const
     {
         _signal.emit(params...);
     }

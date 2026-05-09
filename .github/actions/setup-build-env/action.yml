@@ -5,6 +5,18 @@ inputs:
   preset:
     description: CMake preset
     required: true
+  compiler:
+    description: Compiler to setup via setup-cpp
+    required: true
+  vcvarsall:
+    description: Setup vcvarsall (Windows MSVC)
+    default: 'false'
+  clang-tidy:
+    description: Install clang-tidy
+    default: 'false'
+  cppcheck:
+    description: Install cppcheck
+    default: 'false'
 
 runs:
   using: composite
@@ -27,12 +39,23 @@ runs:
     - name: Install Vulkan SDK
       uses: humbletim/install-vulkan-sdk@033219e2d69dd4d3e873e217eb385fdd4b4438f4
       with:
-        version: 1.4.328.1
+        version: 1.4.341.1
         cache: true
 
     - name: Install CUDA Toolkit
-      uses: Jimver/cuda-toolkit@v0.2.30
+      uses: Jimver/cuda-toolkit@v0.2.35
       with:
         method: network
-        cuda: 13.0.0
+        cuda: 13.2.0
         log-file-suffix: '${{github.job}}-${{ inputs.preset }}.txt'
+
+    - name: Setup Cpp
+      uses: aminya/setup-cpp@v1.8.0
+      with:
+        compiler: ${{ inputs.compiler }}
+        vcvarsall: ${{ inputs.vcvarsall }}
+        cmake: true
+        ninja: true
+        ccache: true
+        clang-tidy: ${{ inputs.clang-tidy }}
+        cppcheck: ${{ inputs.cppcheck }}
