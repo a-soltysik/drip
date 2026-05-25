@@ -1,0 +1,115 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Simulation Config",
+  "properties": {
+    "domain": {
+      "description": "Simulation domain configuration defining the space where particles are constrained",
+      "type": "object",
+      "properties": {
+        "bounds": {
+          "description": "Boundary limits",
+          "$ref": "#/$defs/bounds"
+        }
+      }
+    },
+    "fluid": {
+      "description": "Fluid configuration including initial spawn area and physical properties",
+      "type": "object",
+      "properties": {
+        "bounds": {
+          "description": "Initial volume where fluid particles are spawned at the start of simulation",
+          "$ref": "#/$defs/bounds"
+        },
+        "properties": {
+          "description": "Physical properties of the fluid used in SPH calculations",
+          "type": "object",
+          "properties": {
+            "spacing": {
+              "description": "Distance between particles during initialization, also used to compute particle radius for rendering",
+              "type": "number"
+            },
+            "smoothingRadius": {
+              "description": "Smoothing length for SPH interpolation",
+              "type": "number"
+            },
+            "density": {
+              "description": "Rest density of the fluid in kg/m^3",
+              "type": "number"
+            },
+            "surfaceTension": {
+              "description": "Surface tension coefficient",
+              "type": "number"
+            },
+            "viscosity": {
+              "description": "Viscosity coefficient",
+              "type": "number"
+            },
+            "maxVelocity": {
+              "description": "Maximum allowed particle velocity, used for velocity clamping",
+              "type": "number"
+            },
+            "speedOfSound": {
+              "description": "Speed of sound in the fluid",
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "environment": {
+      "description": "Environmental parameters",
+      "type": "object",
+      "properties": {
+        "gravity": {
+          "description": "Gravitational acceleration vector applied to all particles",
+          "$ref": "#/$defs/vec3"
+        }
+      }
+    }
+  },
+  "required": [
+    "domain",
+    "fluid",
+    "environment"
+  ],
+  "$defs": {
+    "vec3": {
+      "description": "3D vector",
+      "type": "object",
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y",
+        "z"
+      ]
+    },
+    "bounds": {
+      "description": "Axis-aligned bounding box in 3D space",
+      "type": "object",
+      "properties": {
+        "min": {
+          "description": "Minimum corner of the bounding box (lower-left-back)",
+          "$ref": "#/$defs/vec3"
+        },
+        "max": {
+          "description": "Maximum corner of the bounding box (upper-right-front)",
+          "$ref": "#/$defs/vec3"
+        }
+      },
+      "required": [
+        "min",
+        "max"
+      ]
+    }
+  }
+}

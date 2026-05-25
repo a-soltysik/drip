@@ -1,11 +1,13 @@
 function(drip_setup_dependencies)
 
     CPMAddPackage(
-            URI "gh:fmtlib/fmt#12.1.0"
+            URI "gh:fmtlib/fmt#03cfb8645e2646fce738fe9d8e13fe7d7d947ad4"
             OPTIONS "FMT_UNICODE OFF")
     CPMAddPackage("gh:g-truc/glm#1.0.2")
     CPMAddPackage("gh:glfw/glfw#3.4")
     CPMAddPackage("gh:nlohmann/json@3.12.0")
+    CPMAddPackage("gh:pboettch/json-schema-validator#2.4.0")
+    CPMAddPackage("gh:doctest/doctest@2.4.12")
     CPMAddPackage(
             NAME Boost
             VERSION 1.90.0

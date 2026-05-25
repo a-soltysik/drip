@@ -1,4 +1,3 @@
-#include <cuda/std/__exception/cuda_error.h>
 #include <cuda_runtime_api.h>
 #include <driver_types.h>
 

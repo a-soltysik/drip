@@ -1,4 +1,4 @@
-name: Build
+name: Test
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
     branches:
       - 'master'
 jobs:
-  build:
+  test:
     name: ${{ matrix.config.name }}
     runs-on: ${{ matrix.config.os }}
     strategy:
@@ -20,30 +20,10 @@ jobs:
             preset: windows-msvc-release
             compiler: msvc
 
-          - name: "Windows MSVC Debug"
-            os: windows-latest
-            preset: windows-msvc-debug
-            compiler: msvc
-
           - name: "Linux GCC Release"
             os: ubuntu-latest
             preset: linux-gcc-release
             compiler: gcc-14
-
-          - name: "Linux GCC Debug"
-            os: ubuntu-latest
-            preset: linux-gcc-with-warnings
-            compiler: gcc-14
-
-          - name: "Linux Clang Release"
-            os: ubuntu-latest
-            preset: linux-clang-release
-            compiler: llvm-20
-
-          - name: "Linux Clang Debug"
-            os: ubuntu-latest
-            preset: linux-clang-with-warnings
-            compiler: llvm-20
 
     steps:
       - uses: actions/checkout@v5
@@ -65,3 +45,6 @@ jobs:
 
       - name: Build
         run: cmake --build --preset ${{ matrix.config.preset }}
+
+      - name: Test
+        run: ctest --output-on-failure --preset ${{ matrix.config.preset }}

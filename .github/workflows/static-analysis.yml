@@ -18,20 +18,13 @@ jobs:
         uses: ./.github/actions/setup-build-env
         with:
           preset: linux-gcc-with-clang-tidy
+          compiler: gcc-14
+          clang-tidy: true
 
       - name: Setup Cache
         uses: ./.github/actions/setup-cache
         with:
           preset: linux-gcc-with-clang-tidy
-
-      - name: Setup Cpp
-        uses: aminya/setup-cpp@v1.7.1
-        with:
-          compiler: gcc-14
-          cmake: true
-          ninja: true
-          ccache: true
-          clang-tidy: true
 
       - name: Configure
         run: cmake --preset linux-gcc-with-clang-tidy
@@ -48,20 +41,13 @@ jobs:
         uses: ./.github/actions/setup-build-env
         with:
           preset: linux-gcc-with-cppcheck
+          compiler: gcc-14
+          cppcheck: true
 
       - name: Setup Cache
         uses: ./.github/actions/setup-cache
         with:
           preset: linux-gcc-with-cppcheck
-
-      - name: Setup Cpp
-        uses: aminya/setup-cpp@v1.7.1
-        with:
-          compiler: gcc-14
-          cmake: true
-          ninja: true
-          ccache: true
-          cppcheck: true
 
       - name: Configure
         run: cmake --preset linux-gcc-with-cppcheck
@@ -84,19 +70,12 @@ jobs:
         uses: ./.github/actions/setup-build-env
         with:
           preset: linux-gcc-debug
+          compiler: gcc-14
 
       - name: Setup Cache
         uses: ./.github/actions/setup-cache
         with:
           preset: linux-gcc-debug
-
-      - name: Setup Cpp
-        uses: aminya/setup-cpp@v1.7.1
-        with:
-          compiler: gcc-14
-          cmake: true
-          ninja: true
-          ccache: true
 
       - name: Configure
         run: cmake --preset linux-gcc-debug

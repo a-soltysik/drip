@@ -45,4 +45,10 @@ macro(drip_target_link_cuda target_name)
             $<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>
             $<$<COMPILE_LANGUAGE:CUDA>:--extended-lambda>
     )
+
+    if (MSVC)
+        target_compile_options(${target_name} PRIVATE
+                $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=/Zc:preprocessor>
+        )
+    endif ()
 endmacro()
