@@ -5,17 +5,17 @@
 #include "ParticlesRenderSystem.hpp"
 
 #include <cstdint>
-#include <filesystem>
 #include <memory>
 #include <ranges>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
-#include "drip/gfx/internal/config.hpp"
 #include "drip/gfx/resource/ParticlesRenderable.hpp"
 #include "drip/gfx/resource/Renderable.hpp"
 #include "drip/gfx/scene/Scene.hpp"
+#include "drip/gfx/shaders/Particles.frag.spv.hpp"
+#include "drip/gfx/shaders/Particles.vert.spv.hpp"
 #include "drip/gfx/utils/format/ResultFormatter.hpp"  // NOLINT(misc-include-cleaner)
 #include "rendering/FrameInfo.hpp"
 #include "rendering/Renderer.hpp"
@@ -97,8 +97,8 @@ auto ParticlesRenderSystem::createPipeline(const Device& device,
                                                  .stencilTestEnable = vk::False};
 
     return std::make_unique<Pipeline>(device,
-                                      PipelineConfig {.vertexShaderPath = config::shaderPath / "Particles.vert.spv",
-                                                      .fragmentShaderPath = config::shaderPath / "Particles.frag.spv",
+                                      PipelineConfig {.vertexShader = shader::particlesVert,
+                                                      .fragmentShader = shader::particlesFrag,
                                                       .vertexBindingDescriptions = {},
                                                       .vertexAttributeDescriptions = {},
                                                       .inputAssemblyInfo = inputAssemblyInfo,

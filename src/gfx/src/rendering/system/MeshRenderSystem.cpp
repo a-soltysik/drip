@@ -6,7 +6,6 @@
 
 #include <cstddef>
 #include <drip/common/utils/Utils.hpp>
-#include <filesystem>
 #include <glm/ext/vector_float3.hpp>
 #include <memory>
 #include <ranges>
@@ -14,7 +13,6 @@
 #include <vulkan/vulkan_enums.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
-#include "drip/gfx/internal/config.hpp"
 #include "drip/gfx/resource/Mesh.hpp"
 #include "drip/gfx/resource/MeshRenderable.hpp"
 #include "drip/gfx/resource/Renderable.hpp"
@@ -22,6 +20,8 @@
 #include "drip/gfx/resource/Texture.hpp"
 #include "drip/gfx/resource/Vertex.hpp"
 #include "drip/gfx/scene/Scene.hpp"
+#include "drip/gfx/shaders/Mesh.frag.spv.hpp"
+#include "drip/gfx/shaders/Mesh.vert.spv.hpp"
 #include "drip/gfx/utils/format/ResultFormatter.hpp"  // NOLINT(misc-include-cleaner)
 #include "rendering/FrameInfo.hpp"
 #include "rendering/Renderer.hpp"
@@ -121,8 +121,8 @@ auto MeshRenderSystem::createPipeline(const Device& device,
 
     return std::make_unique<Pipeline>(
         device,
-        PipelineConfig {.vertexShaderPath = config::shaderPath / "Mesh.vert.spv",
-                        .fragmentShaderPath = config::shaderPath / "Mesh.frag.spv",
+        PipelineConfig {.vertexShader = shader::meshVert,
+                        .fragmentShader = shader::meshFrag,
                         .vertexBindingDescriptions = {Vertex::getBindingDescription()},
                         .vertexAttributeDescriptions = common::utils::fromArray(Vertex::getAttributeDescriptions()),
                         .inputAssemblyInfo = inputAssemblyInfo,

@@ -12,8 +12,8 @@
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_handles.hpp>
 
+#include "drip/gfx/Config.hpp"
 #include "drip/gfx/gui/GuiManager.hpp"
-#include "drip/gfx/internal/config.hpp"
 
 namespace drip::gfx
 {
