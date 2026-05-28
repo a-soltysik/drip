@@ -77,6 +77,7 @@ target_compile_definitions(
         $<$<CXX_COMPILER_ID:MSVC>:NOMINMAX>
 )
 
+set(ENGINE_TARGET_NAME "drip::engine")
 add_subdirectory(config)
 add_subdirectory(shader)
 add_dependencies(drip_engine drip_shader)

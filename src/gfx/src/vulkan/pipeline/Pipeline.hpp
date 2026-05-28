@@ -4,7 +4,8 @@
 #include <drip/common/utils/Assert.hpp>
 // clang-format on
 
-#include <filesystem>
+#include <cstdint>
+#include <span>
 #include <vector>
 #include <vulkan/vulkan.hpp>
 #include <vulkan/vulkan_handles.hpp>
@@ -17,8 +18,8 @@ namespace drip::gfx
 
 struct PipelineConfig
 {
-    std::filesystem::path vertexShaderPath;
-    std::filesystem::path fragmentShaderPath;
+    std::span<const uint32_t> vertexShader;
+    std::span<const uint32_t> fragmentShader;
 
     std::vector<vk::VertexInputBindingDescription> vertexBindingDescriptions;
     std::vector<vk::VertexInputAttributeDescription> vertexAttributeDescriptions;

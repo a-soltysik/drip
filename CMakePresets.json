@@ -1,10 +1,6 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 25,
-    "patch": 0
-  },
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
   "configurePresets": [
     {
       "name": "default",
@@ -102,41 +98,11 @@
         "with-cppcheck"
       ]
     },
-    {
-      "name": "with-asan",
-      "hidden": true,
-      "cacheVariables": {
-        "DRIP_ENABLE_SANITIZER_ADDRESS": "ON"
-      }
-    },
-    {
-      "name": "with-lsan",
-      "hidden": true,
-      "cacheVariables": {
-        "DRIP_ENABLE_SANITIZER_LEAK": "ON"
-      }
-    },
-    {
-      "name": "with-ubsan",
-      "hidden": true,
-      "cacheVariables": {
-        "DRIP_ENABLE_SANITIZER_UNDEFINED": "ON"
-      }
-    },
-    {
-      "name": "with-msan",
-      "hidden": true,
-      "cacheVariables": {
-        "DRIP_ENABLE_SANITIZER_MEMORY": "ON"
-      }
-    },
-    {
-      "name": "with-tsan",
-      "hidden": true,
-      "cacheVariables": {
-        "DRIP_ENABLE_SANITIZER_THREAD": "ON"
-      }
-    },
+    { "name": "with-asan", "hidden": true, "cacheVariables": {"DRIP_ENABLE_SANITIZER_ADDRESS": "ON"} },
+    { "name": "with-lsan", "hidden": true, "cacheVariables": {"DRIP_ENABLE_SANITIZER_LEAK": "ON"} },
+    { "name": "with-ubsan", "hidden": true, "cacheVariables": {"DRIP_ENABLE_SANITIZER_UNDEFINED": "ON"} },
+    { "name": "with-msan", "hidden": true, "cacheVariables": {"DRIP_ENABLE_SANITIZER_MEMORY": "ON"} },
+    { "name": "with-tsan", "hidden": true, "cacheVariables": {"DRIP_ENABLE_SANITIZER_THREAD": "ON"} },
     {
       "name": "windows-msvc-debug",
       "displayName": "Windows MSVC Debug",
@@ -204,70 +170,14 @@
         "CMAKE_CXX_COMPILER": "g++"
       }
     },
-    {
-      "name": "linux-gcc-with-warnings",
-      "displayName": "Linux GCC Debug With Warnings",
-      "inherits": [
-        "linux-gcc-debug",
-        "with-warnings"
-      ]
-    },
-    {
-      "name": "linux-gcc-with-cppcheck",
-      "displayName": "Linux GCC With Cppcheck",
-      "inherits": [
-        "linux-gcc-debug",
-        "with-cppcheck"
-      ]
-    },
-    {
-      "name": "linux-gcc-with-clang-tidy",
-      "displayName": "Linux GCC With Clang Tidy",
-      "inherits": [
-        "linux-gcc-debug",
-        "with-clang-tidy"
-      ]
-    },
-    {
-      "name": "linux-gcc-analysis",
-      "displayName": "Linux GCC Analysis",
-      "inherits": [
-        "linux-gcc-debug",
-        "with-static-analysis"
-      ]
-    },
-    {
-      "name": "linux-gcc-with-asan",
-      "displayName": "Linux GCC ASAN",
-      "inherits": [
-        "linux-gcc-debug",
-        "with-asan"
-      ]
-    },
-    {
-      "name": "linux-gcc-with-ubsan",
-      "displayName": "Linux GCC UBSAN",
-      "inherits": [
-        "linux-gcc-debug",
-        "with-ubsan"
-      ]
-    },
-    {
-      "name": "linux-gcc-with-lsan",
-      "displayName": "Linux GCC LSAN",
-      "inherits": [
-        "linux-gcc-debug",
-        "with-lsan"
-      ]
-    },
-    {
-      "name": "linux-gcc-with-tsan",
-      "displayName": "Linux GCC TSAN",
-      "inherits": [
-        "linux-gcc-debug",
-        "with-tsan"
-      ]
-    },
+    { "name": "linux-gcc-with-warnings", "displayName": "Linux GCC Debug With Warnings", "inherits": ["linux-gcc-debug", "with-warnings"] },
+    { "name": "linux-gcc-with-cppcheck", "displayName": "Linux GCC With Cppcheck", "inherits": ["linux-gcc-debug", "with-cppcheck"] },
+    { "name": "linux-gcc-with-clang-tidy", "displayName": "Linux GCC With Clang Tidy", "inherits": ["linux-gcc-debug", "with-clang-tidy"] },
+    { "name": "linux-gcc-analysis", "displayName": "Linux GCC Analysis", "inherits": ["linux-gcc-debug", "with-static-analysis"] },
+    { "name": "linux-gcc-with-asan", "displayName": "Linux GCC ASAN", "inherits": ["linux-gcc-debug", "with-asan"] },
+    { "name": "linux-gcc-with-ubsan", "displayName": "Linux GCC UBSAN", "inherits": ["linux-gcc-debug", "with-ubsan"] },
+    { "name": "linux-gcc-with-lsan", "displayName": "Linux GCC LSAN", "inherits": ["linux-gcc-debug", "with-lsan"] },
+    { "name": "linux-gcc-with-tsan", "displayName": "Linux GCC TSAN", "inherits": ["linux-gcc-debug", "with-tsan"] },
     {
       "name": "linux-clang-debug",
       "displayName": "Linux Clang Debug",
@@ -296,321 +206,66 @@
         "CMAKE_CUDA_HOST_COMPILER": "clang++"
       }
     },
-    {
-      "name": "linux-clang-with-warnings",
-      "displayName": "Linux Clang With Warnings",
-      "inherits": [
-        "linux-clang-debug",
-        "with-warnings"
-      ]
-    },
-    {
-      "name": "linux-clang-with-clang-tidy",
-      "displayName": "Linux Clang With Clang Tidy",
-      "inherits": [
-        "linux-clang-debug",
-        "with-clang-tidy"
-      ]
-    },
-    {
-      "name": "linux-clang-with-cppcheck",
-      "displayName": "Linux Clang With Cppcheck",
-      "inherits": [
-        "linux-clang-debug",
-        "with-cppcheck"
-      ]
-    },
-    {
-      "name": "linux-clang-analysis",
-      "displayName": "Linux Clang Analysis",
-      "inherits": [
-        "linux-clang-debug",
-        "with-static-analysis"
-      ]
-    },
-    {
-      "name": "linux-clang-with-asan",
-      "displayName": "Linux Clang ASAN",
-      "inherits": [
-        "linux-clang-debug",
-        "with-asan"
-      ]
-    },
-    {
-      "name": "linux-clang-with-ubsan",
-      "displayName": "Linux Clang UBSAN",
-      "inherits": [
-        "linux-clang-debug",
-        "with-ubsan"
-      ]
-    },
-    {
-      "name": "linux-clang-with-lsan",
-      "displayName": "Linux Clang LSAN",
-      "inherits": [
-        "linux-clang-debug",
-        "with-lsan"
-      ]
-    },
-    {
-      "name": "linux-clang-with-tsan",
-      "displayName": "Linux Clang TSAN",
-      "inherits": [
-        "linux-clang-debug",
-        "with-tsan"
-      ]
-    },
-    {
-      "name": "linux-clang-with-msan",
-      "displayName": "Linux Clang MSAN",
-      "inherits": [
-        "linux-clang-debug",
-        "with-msan"
-      ]
-    }
+    { "name": "linux-clang-with-warnings", "displayName": "Linux Clang With Warnings", "inherits": ["linux-clang-debug", "with-warnings"] },
+    { "name": "linux-clang-with-clang-tidy", "displayName": "Linux Clang With Clang Tidy", "inherits": ["linux-clang-debug", "with-clang-tidy"] },
+    { "name": "linux-clang-with-cppcheck", "displayName": "Linux Clang With Cppcheck", "inherits": ["linux-clang-debug", "with-cppcheck"] },
+    { "name": "linux-clang-analysis", "displayName": "Linux Clang Analysis", "inherits": ["linux-clang-debug", "with-static-analysis"] },
+    { "name": "linux-clang-with-asan", "displayName": "Linux Clang ASAN", "inherits": ["linux-clang-debug", "with-asan"] },
+    { "name": "linux-clang-with-ubsan", "displayName": "Linux Clang UBSAN", "inherits": ["linux-clang-debug", "with-ubsan"] },
+    { "name": "linux-clang-with-lsan", "displayName": "Linux Clang LSAN", "inherits": ["linux-clang-debug", "with-lsan"] },
+    { "name": "linux-clang-with-tsan", "displayName": "Linux Clang TSAN", "inherits": ["linux-clang-debug", "with-tsan"] },
+    { "name": "linux-clang-with-msan", "displayName": "Linux Clang MSAN", "inherits": ["linux-clang-debug", "with-msan"] }
   ],
   "buildPresets": [
-    {
-      "name": "windows-msvc-debug",
-      "displayName": "Windows MSVC Debug",
-      "configurePreset": "windows-msvc-debug"
-    },
-    {
-      "name": "windows-msvc-release",
-      "displayName": "Windows MSVC Release",
-      "configurePreset": "windows-msvc-release"
-    },
-    {
-      "name": "windows-msvc-relwithdebinfo",
-      "displayName": "Windows MSVC RelWithDebInfo",
-      "configurePreset": "windows-msvc-relwithdebinfo"
-    },
-    {
-      "name": "linux-gcc-debug",
-      "displayName": "Linux GCC Debug",
-      "configurePreset": "linux-gcc-debug"
-    },
-    {
-      "name": "linux-gcc-release",
-      "displayName": "Linux GCC Release",
-      "configurePreset": "linux-gcc-release"
-    },
-    {
-      "name": "linux-gcc-with-warnings",
-      "displayName": "Linux GCC Debug With Warnings",
-      "configurePreset": "linux-gcc-with-warnings"
-    },
-    {
-      "name": "linux-gcc-with-cppcheck",
-      "displayName": "Linux GCC With Cppcheck",
-      "configurePreset": "linux-gcc-with-cppcheck"
-    },
-    {
-      "name": "linux-gcc-with-clang-tidy",
-      "displayName": "Linux GCC With Clang Tidy",
-      "configurePreset": "linux-gcc-with-clang-tidy"
-    },
-    {
-      "name": "linux-gcc-analysis",
-      "displayName": "Linux GCC Analysis",
-      "configurePreset": "linux-gcc-analysis"
-    },
-    {
-      "name": "linux-gcc-with-asan",
-      "displayName": "Linux GCC ASAN",
-      "configurePreset": "linux-gcc-with-asan"
-    },
-    {
-      "name": "linux-gcc-with-ubsan",
-      "displayName": "Linux GCC UBSAN",
-      "configurePreset": "linux-gcc-with-ubsan"
-    },
-    {
-      "name": "linux-gcc-with-lsan",
-      "displayName": "Linux GCC LSAN",
-      "configurePreset": "linux-gcc-with-lsan"
-    },
-    {
-      "name": "linux-gcc-with-tsan",
-      "displayName": "Linux GCC TSAN",
-      "configurePreset": "linux-gcc-with-tsan"
-    },
-    {
-      "name": "linux-clang-debug",
-      "displayName": "Linux Clang Debug",
-      "configurePreset": "linux-clang-debug"
-    },
-    {
-      "name": "linux-clang-release",
-      "displayName": "Linux Clang Release",
-      "configurePreset": "linux-clang-release"
-    },
-    {
-      "name": "linux-clang-with-warnings",
-      "displayName": "Linux Clang With Warnings",
-      "configurePreset": "linux-clang-with-warnings"
-    },
-    {
-      "name": "linux-clang-with-clang-tidy",
-      "displayName": "Linux Clang With Clang Tidy",
-      "configurePreset": "linux-clang-with-clang-tidy"
-    },
-    {
-      "name": "linux-clang-with-cppcheck",
-      "displayName": "Linux Clang With Cppcheck",
-      "configurePreset": "linux-clang-with-cppcheck"
-    },
-    {
-      "name": "linux-clang-analysis",
-      "displayName": "Linux Clang Analysis",
-      "configurePreset": "linux-clang-analysis"
-    },
-    {
-      "name": "linux-clang-with-asan",
-      "displayName": "Linux Clang ASAN",
-      "configurePreset": "linux-clang-with-asan"
-    },
-    {
-      "name": "linux-clang-with-ubsan",
-      "displayName": "Linux Clang UBSAN",
-      "configurePreset": "linux-clang-with-ubsan"
-    },
-    {
-      "name": "linux-clang-with-lsan",
-      "displayName": "Linux Clang LSAN",
-      "configurePreset": "linux-clang-with-lsan"
-    },
-    {
-      "name": "linux-clang-with-tsan",
-      "displayName": "Linux Clang TSAN",
-      "configurePreset": "linux-clang-with-tsan"
-    },
-    {
-      "name": "linux-clang-with-msan",
-      "displayName": "Linux Clang MSAN",
-      "configurePreset": "linux-clang-with-msan"
-    }
+    { "name": "windows-msvc-debug", "configurePreset": "windows-msvc-debug" },
+    { "name": "windows-msvc-release", "configurePreset": "windows-msvc-release" },
+    { "name": "windows-msvc-relwithdebinfo", "configurePreset": "windows-msvc-relwithdebinfo" },
+    { "name": "linux-gcc-debug", "configurePreset": "linux-gcc-debug" },
+    { "name": "linux-gcc-release", "configurePreset": "linux-gcc-release" },
+    { "name": "linux-gcc-with-warnings", "configurePreset": "linux-gcc-with-warnings" },
+    { "name": "linux-gcc-with-cppcheck", "configurePreset": "linux-gcc-with-cppcheck" },
+    { "name": "linux-gcc-with-clang-tidy", "configurePreset": "linux-gcc-with-clang-tidy" },
+    { "name": "linux-gcc-analysis", "configurePreset": "linux-gcc-analysis" },
+    { "name": "linux-gcc-with-asan", "configurePreset": "linux-gcc-with-asan" },
+    { "name": "linux-gcc-with-ubsan", "configurePreset": "linux-gcc-with-ubsan" },
+    { "name": "linux-gcc-with-lsan", "configurePreset": "linux-gcc-with-lsan" },
+    { "name": "linux-gcc-with-tsan", "configurePreset": "linux-gcc-with-tsan" },
+    { "name": "linux-clang-debug", "configurePreset": "linux-clang-debug" },
+    { "name": "linux-clang-release", "configurePreset": "linux-clang-release" },
+    { "name": "linux-clang-with-warnings", "configurePreset": "linux-clang-with-warnings" },
+    { "name": "linux-clang-with-clang-tidy", "configurePreset": "linux-clang-with-clang-tidy" },
+    { "name": "linux-clang-with-cppcheck", "configurePreset": "linux-clang-with-cppcheck" },
+    { "name": "linux-clang-analysis", "configurePreset": "linux-clang-analysis" },
+    { "name": "linux-clang-with-asan", "configurePreset": "linux-clang-with-asan" },
+    { "name": "linux-clang-with-ubsan", "configurePreset": "linux-clang-with-ubsan" },
+    { "name": "linux-clang-with-lsan", "configurePreset": "linux-clang-with-lsan" },
+    { "name": "linux-clang-with-tsan", "configurePreset": "linux-clang-with-tsan" },
+    { "name": "linux-clang-with-msan", "configurePreset": "linux-clang-with-msan" }
   ],
   "testPresets": [
-    {
-      "name": "windows-msvc-debug",
-      "displayName": "Windows MSVC Debug",
-      "configurePreset": "windows-msvc-debug"
-    },
-    {
-      "name": "windows-msvc-release",
-      "displayName": "Windows MSVC Release",
-      "configurePreset": "windows-msvc-release"
-    },
-    {
-      "name": "windows-msvc-relwithdebinfo",
-      "displayName": "Windows MSVC RelWithDebInfo",
-      "configurePreset": "windows-msvc-relwithdebinfo"
-    },
-    {
-      "name": "linux-gcc-debug",
-      "displayName": "Linux GCC Debug",
-      "configurePreset": "linux-gcc-debug"
-    },
-    {
-      "name": "linux-gcc-release",
-      "displayName": "Linux GCC Release",
-      "configurePreset": "linux-gcc-release"
-    },
-    {
-      "name": "linux-gcc-with-warnings",
-      "displayName": "Linux GCC Debug With Warnings",
-      "configurePreset": "linux-gcc-with-warnings"
-    },
-    {
-      "name": "linux-gcc-with-cppcheck",
-      "displayName": "Linux GCC With Cppcheck",
-      "configurePreset": "linux-gcc-with-cppcheck"
-    },
-    {
-      "name": "linux-gcc-with-clang-tidy",
-      "displayName": "Linux GCC With Clang Tidy",
-      "configurePreset": "linux-gcc-with-clang-tidy"
-    },
-    {
-      "name": "linux-gcc-analysis",
-      "displayName": "Linux GCC Analysis",
-      "configurePreset": "linux-gcc-analysis"
-    },
-    {
-      "name": "linux-gcc-with-asan",
-      "displayName": "Linux GCC ASAN",
-      "configurePreset": "linux-gcc-with-asan"
-    },
-    {
-      "name": "linux-gcc-with-ubsan",
-      "displayName": "Linux GCC UBSAN",
-      "configurePreset": "linux-gcc-with-ubsan"
-    },
-    {
-      "name": "linux-gcc-with-lsan",
-      "displayName": "Linux GCC LSAN",
-      "configurePreset": "linux-gcc-with-lsan"
-    },
-    {
-      "name": "linux-gcc-with-tsan",
-      "displayName": "Linux GCC TSAN",
-      "configurePreset": "linux-gcc-with-tsan"
-    },
-    {
-      "name": "linux-clang-debug",
-      "displayName": "Linux Clang Debug",
-      "configurePreset": "linux-clang-debug"
-    },
-    {
-      "name": "linux-clang-release",
-      "displayName": "Linux Clang Release",
-      "configurePreset": "linux-clang-release"
-    },
-    {
-      "name": "linux-clang-with-warnings",
-      "displayName": "Linux Clang With Warnings",
-      "configurePreset": "linux-clang-with-warnings"
-    },
-    {
-      "name": "linux-clang-with-clang-tidy",
-      "displayName": "Linux Clang With Clang Tidy",
-      "configurePreset": "linux-clang-with-clang-tidy"
-    },
-    {
-      "name": "linux-clang-with-cppcheck",
-      "displayName": "Linux Clang With Cppcheck",
-      "configurePreset": "linux-clang-with-cppcheck"
-    },
-    {
-      "name": "linux-clang-analysis",
-      "displayName": "Linux Clang Analysis",
-      "configurePreset": "linux-clang-analysis"
-    },
-    {
-      "name": "linux-clang-with-asan",
-      "displayName": "Linux Clang ASAN",
-      "configurePreset": "linux-clang-with-asan"
-    },
-    {
-      "name": "linux-clang-with-ubsan",
-      "displayName": "Linux Clang UBSAN",
-      "configurePreset": "linux-clang-with-ubsan"
-    },
-    {
-      "name": "linux-clang-with-lsan",
-      "displayName": "Linux Clang LSAN",
-      "configurePreset": "linux-clang-with-lsan"
-    },
-    {
-      "name": "linux-clang-with-tsan",
-      "displayName": "Linux Clang TSAN",
-      "configurePreset": "linux-clang-with-tsan"
-    },
-    {
-      "name": "linux-clang-with-msan",
-      "displayName": "Linux Clang MSAN",
-      "configurePreset": "linux-clang-with-msan"
-    }
+    { "name": "windows-msvc-debug", "configurePreset": "windows-msvc-debug" },
+    { "name": "windows-msvc-release", "configurePreset": "windows-msvc-release" },
+    { "name": "windows-msvc-relwithdebinfo", "configurePreset": "windows-msvc-relwithdebinfo" },
+    { "name": "linux-gcc-debug", "configurePreset": "linux-gcc-debug" },
+    { "name": "linux-gcc-release", "configurePreset": "linux-gcc-release" },
+    { "name": "linux-gcc-with-warnings", "configurePreset": "linux-gcc-with-warnings" },
+    { "name": "linux-gcc-with-cppcheck", "configurePreset": "linux-gcc-with-cppcheck" },
+    { "name": "linux-gcc-with-clang-tidy", "configurePreset": "linux-gcc-with-clang-tidy" },
+    { "name": "linux-gcc-analysis", "configurePreset": "linux-gcc-analysis" },
+    { "name": "linux-gcc-with-asan", "configurePreset": "linux-gcc-with-asan" },
+    { "name": "linux-gcc-with-ubsan", "configurePreset": "linux-gcc-with-ubsan" },
+    { "name": "linux-gcc-with-lsan", "configurePreset": "linux-gcc-with-lsan" },
+    { "name": "linux-gcc-with-tsan", "configurePreset": "linux-gcc-with-tsan" },
+    { "name": "linux-clang-debug", "configurePreset": "linux-clang-debug" },
+    { "name": "linux-clang-release", "configurePreset": "linux-clang-release" },
+    { "name": "linux-clang-with-warnings", "configurePreset": "linux-clang-with-warnings" },
+    { "name": "linux-clang-with-clang-tidy", "configurePreset": "linux-clang-with-clang-tidy" },
+    { "name": "linux-clang-with-cppcheck", "configurePreset": "linux-clang-with-cppcheck" },
+    { "name": "linux-clang-analysis", "configurePreset": "linux-clang-analysis" },
+    { "name": "linux-clang-with-asan", "configurePreset": "linux-clang-with-asan" },
+    { "name": "linux-clang-with-ubsan", "configurePreset": "linux-clang-with-ubsan" },
+    { "name": "linux-clang-with-lsan", "configurePreset": "linux-clang-with-lsan" },
+    { "name": "linux-clang-with-tsan", "configurePreset": "linux-clang-with-tsan" },
+    { "name": "linux-clang-with-msan", "configurePreset": "linux-clang-with-msan" }
   ]
 }

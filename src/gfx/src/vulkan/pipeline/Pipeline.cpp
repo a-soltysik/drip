@@ -34,8 +34,8 @@ Pipeline::~Pipeline() noexcept
 
 auto Pipeline::createPipeline(const Device& device, const PipelineConfig& config) -> vk::Pipeline
 {
-    const auto vertexShader = Shader::createFromFile(device.logicalDevice, config.vertexShaderPath);
-    const auto fragmentShader = Shader::createFromFile(device.logicalDevice, config.fragmentShaderPath);
+    const auto vertexShader = Shader::create(device.logicalDevice, config.vertexShader, Shader::Type::Vertex);
+    const auto fragmentShader = Shader::create(device.logicalDevice, config.fragmentShader, Shader::Type::Fragment);
 
     auto shaderStages = std::vector<vk::PipelineShaderStageCreateInfo> {};
 

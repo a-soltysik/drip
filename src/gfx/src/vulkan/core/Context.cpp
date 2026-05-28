@@ -27,9 +27,9 @@
 #include <vulkan/vulkan_hpp_macros.hpp>
 #include <vulkan/vulkan_structs.hpp>
 
+#include "drip/gfx/Config.hpp"
 #include "drip/gfx/Window.hpp"
 #include "drip/gfx/gui/GuiManager.hpp"
-#include "drip/gfx/internal/config.hpp"
 #include "drip/gfx/resource/Mesh.hpp"
 #include "drip/gfx/resource/Texture.hpp"
 #include "drip/gfx/scene/Camera.hpp"
