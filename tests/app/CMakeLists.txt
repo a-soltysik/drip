@@ -6,7 +6,6 @@ target_sources(
         main.cpp
         utils/IntervalCacheTest.cpp
         utils/FrameTimeManagerTest.cpp
-        utils/UtilsTest.cpp
         config/SerializersTest.cpp
         config/JsonFileReaderTest.cpp
 )

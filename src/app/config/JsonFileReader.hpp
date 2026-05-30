@@ -2,47 +2,35 @@
 #include <drip/common/log/LogMessageBuilder.hpp>
 #include <exception>
 #include <filesystem>
-#include <fstream>
 #include <nlohmann/json-schema.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <optional>
+#include <string_view>
 
 #include "Serializers.hpp"  //NOLINT(misc-include-cleaner)
 #include "utils/FileReader.hpp"
-#include "utils/Utils.hpp"
 
 namespace drip::app
 {
 
 template <typename T>
-auto readJsonFile(const std::filesystem::path& path, const std::filesystem::path validatorPath) -> std::optional<T>
+auto readJsonFile(const std::filesystem::path& path, std::string_view schema) -> std::optional<T>
 {
-    const auto tryMakeValidator =
-        [&validatorPath](const auto& validatorJson) -> std::optional<nlohmann::json_schema::json_validator> {
+    const auto tryValidate = [&path, schema](const auto& json) -> std::optional<nlohmann::json> {
         try
         {
             auto validator = nlohmann::json_schema::json_validator {};
-            validator.set_root_schema(validatorJson);
-            return validator;
+            validator.set_root_schema(nlohmann::json::parse(schema));
+            validator.validate(json);
+            return json;
         }
         catch (const std::exception& e)
         {
-            common::log::Error("JSON schema parsing error, file {}", validatorPath.string()).withException(e);
-            return std::nullopt;
-        }
-    };
-
-    const auto tryValidate = [&path, &validatorPath](const auto& pair) -> std::optional<nlohmann::json> {
-        const auto& [config, validator] = pair;
-        try
-        {
-            validator.validate(config);
-            return config;
-        }
-        catch (const std::exception& e)
-        {
-            common::log::Error("JSON validation error, file {}, schema {}", path.string(), validatorPath.string())
+            static constexpr auto schemaPreviewSize = 100;
+            common::log::Error("JSON validation error, file {}, schema {}",
+                               path.string(),
+                               schema.substr(0, schemaPreviewSize))
                 .withException(e);
             return std::nullopt;
         }
@@ -60,10 +48,7 @@ auto readJsonFile(const std::filesystem::path& path, const std::filesystem::path
         }
     };
 
-    return utils::and_both(utils::readFile<nlohmann::json>(path),
-                           utils::readFile<nlohmann::json>(validatorPath).and_then(tryMakeValidator))
-        .and_then(tryValidate)
-        .and_then(tryParse);
+    return utils::readFile<nlohmann::json>(path).and_then(tryValidate).and_then(tryParse);
 }
 
 template <typename T>
