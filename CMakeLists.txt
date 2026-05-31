@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
 include(cmake/Setup.cmake)
 include(ProjectOptions.cmake)
 include(Dependencies.cmake)
@@ -23,10 +25,6 @@ set(CMAKE_CUDA_EXTENSIONS OFF)
 drip_setup_options()
 drip_global_options()
 
-if (DRIP_ENABLE_COMPILE_COMMANDS)
-    drip_enable_compile_commands()
-endif ()
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 drip_setup_dependencies()
@@ -37,6 +35,8 @@ target_compile_features(drip_options INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 add_library(drip::options ALIAS drip_options)
 add_library(drip::warnings ALIAS drip_warnings)
+
+include(DripLibrary)
 
 add_subdirectory(src)
 

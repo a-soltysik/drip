@@ -20,7 +20,10 @@ function(drip_setup_dependencies)
     set(IMGUI_BUILD_GLFW_BINDING ON)
     set(IMGUI_BUILD_VULKAN_BINDING ON)
 
+    # CPMAddPackage downloads the imgui sources; ext/imgui-cmake wraps them into a CMake target
     CPMAddPackage("gh:ocornut/imgui@1.92.5")
     add_subdirectory(ext/imgui-cmake)
+
+    find_package(Vulkan REQUIRED)
 
 endfunction()

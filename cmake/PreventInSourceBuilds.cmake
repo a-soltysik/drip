@@ -10,5 +10,3 @@ function(drip_assure_out_of_source_builds)
         message(FATAL_ERROR "Quitting configuration")
     endif ()
 endfunction()
-
-drip_assure_out_of_source_builds()

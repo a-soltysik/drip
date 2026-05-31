@@ -1,8 +1,5 @@
 macro(drip_target_link_cuda target_name)
     set_target_properties(${target_name} PROPERTIES
-            CUDA_STANDARD ${CMAKE_CUDA_STANDARD}
-            CUDA_STANDARD_REQUIRED ON
-            CUDA_EXTENSIONS OFF
             CUDA_RUNTIME_LIBRARY Shared
             POSITION_INDEPENDENT_CODE ON
             CUDA_SEPARABLE_COMPILATION OFF

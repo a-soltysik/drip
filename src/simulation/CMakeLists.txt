@@ -1,4 +1,4 @@
-include(${CMAKE_SOURCE_DIR}/cmake/Cuda.cmake)
+include(Cuda)
 
 add_library(drip_sim STATIC)
 add_library(drip::sim ALIAS drip_sim)
@@ -23,13 +23,6 @@ target_include_directories(drip_sim
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-target_link_libraries(
-        drip_sim
-        PRIVATE
-        drip::options
-        drip::warnings
-)
-
 target_link_system_libraries(
         drip_sim
         PRIVATE
@@ -44,4 +37,4 @@ target_compile_definitions(drip_sim
         GLM_ENABLE_EXPERIMENTAL
 )
 
-set_target_properties(drip_sim PROPERTIES FOLDER "Libraries")
+drip_library(drip_sim)
