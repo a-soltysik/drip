@@ -46,10 +46,15 @@ target_link_system_libraries(
 target_include_directories(drip_app PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 add_library(drip::app ALIAS drip_app)
 
-
 set_target_properties(
         drip_app
         PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
         FOLDER "Libraries")
+
+file(READ "${CMAKE_SOURCE_DIR}/doc/simulation_config.schema.json" JSON_SCHEMA)
+string(REGEX REPLACE "[ \t\n\r]+" " " JSON_SCHEMA "${JSON_SCHEMA}")
+string(STRIP "${JSON_SCHEMA}" JSON_SCHEMA)
+configure_file(config/JsonSchema.hpp.in "${CMAKE_BINARY_DIR}/configured_files/include/drip/app/config/JsonSchema.hpp" @ONLY)
+
 

@@ -89,12 +89,9 @@ TEST_SUITE("JsonFileReader")
 {
     TEST_CASE("readJsonFile returns nullopt for non-existent file")
     {
-        const auto schema = TempFile("test_schema.json");
-        schema.write(minimalValidSchema);
-
         const auto result = drip::app::readJsonFile<drip::sim::SimulationConfig>(
             std::filesystem::temp_directory_path() / "non_existent.json",
-            schema.path());
+            minimalValidSchema);
 
         CHECK_FALSE(result.has_value());
     }
@@ -104,9 +101,7 @@ TEST_SUITE("JsonFileReader")
         const auto config = TempFile("test_config.json");
         config.write(minimalValidConfig);
 
-        const auto result = drip::app::readJsonFile<drip::sim::SimulationConfig>(
-            config.path(),
-            std::filesystem::temp_directory_path() / "non_existent_schema.json");
+        const auto result = drip::app::readJsonFile<drip::sim::SimulationConfig>(config.path(), "");
 
         CHECK_FALSE(result.has_value());
     }
@@ -114,12 +109,10 @@ TEST_SUITE("JsonFileReader")
     TEST_CASE("readJsonFile returns nullopt for invalid JSON")
     {
         const auto config = TempFile("test_invalid.json");
-        const auto schema = TempFile("test_schema.json");
 
         config.write("{ invalid json }");
-        schema.write(minimalValidSchema);
 
-        const auto result = drip::app::readJsonFile<drip::sim::SimulationConfig>(config.path(), schema.path());
+        const auto result = drip::app::readJsonFile<drip::sim::SimulationConfig>(config.path(), minimalValidSchema);
 
         CHECK_FALSE(result.has_value());
     }
@@ -127,12 +120,10 @@ TEST_SUITE("JsonFileReader")
     TEST_CASE("readJsonFile parses minimal config with defaults")
     {
         const auto config = TempFile("test_valid_config.json");
-        const auto schema = TempFile("test_valid_schema.json");
 
         config.write(minimalValidConfig);
-        schema.write(minimalValidSchema);
 
-        const auto result = drip::app::readJsonFile<drip::sim::SimulationConfig>(config.path(), schema.path());
+        const auto result = drip::app::readJsonFile<drip::sim::SimulationConfig>(config.path(), minimalValidSchema);
 
         REQUIRE(result.has_value());
         CHECK(result->domain.bounds.min.x == doctest::Approx(-1.0));
@@ -142,12 +133,10 @@ TEST_SUITE("JsonFileReader")
     TEST_CASE("readJsonFile parses full config")
     {
         const auto config = TempFile("test_full_config.json");
-        const auto schema = TempFile("test_full_schema.json");
 
         config.write(fullConfig);
-        schema.write(minimalValidSchema);
 
-        const auto result = drip::app::readJsonFile<drip::sim::SimulationConfig>(config.path(), schema.path());
+        const auto result = drip::app::readJsonFile<drip::sim::SimulationConfig>(config.path(), minimalValidSchema);
 
         REQUIRE(result.has_value());
 
