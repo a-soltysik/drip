@@ -1,4 +1,5 @@
 add_library(drip_app STATIC)
+add_library(drip::app ALIAS drip_app)
 
 target_sources(
         drip_app
@@ -21,18 +22,18 @@ target_sources(
         App.cpp
 )
 
-target_link_libraries(
+target_include_directories(
         drip_app
         PUBLIC
-        drip::options
-        drip::warnings
+        ${CMAKE_CURRENT_LIST_DIR}
+        PRIVATE
+        ${CMAKE_BINARY_DIR}/configured_files/include
 )
 
-find_package(Vulkan REQUIRED)
 target_link_system_libraries(
         drip_app
         PUBLIC
-        drip::engine
+        drip::gfx
         drip::common
         drip::sim
         glfw
@@ -43,18 +44,9 @@ target_link_system_libraries(
         Vulkan::Vulkan
 )
 
-target_include_directories(drip_app PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-add_library(drip::app ALIAS drip_app)
-
-set_target_properties(
-        drip_app
-        PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-        FOLDER "Libraries")
+drip_library(drip_app)
 
 file(READ "${CMAKE_SOURCE_DIR}/doc/simulation_config.schema.json" JSON_SCHEMA)
 string(REGEX REPLACE "[ \t\n\r]+" " " JSON_SCHEMA "${JSON_SCHEMA}")
 string(STRIP "${JSON_SCHEMA}" JSON_SCHEMA)
 configure_file(config/JsonSchema.hpp.in "${CMAKE_BINARY_DIR}/configured_files/include/drip/app/config/JsonSchema.hpp" @ONLY)
-
-

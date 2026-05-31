@@ -1,14 +1,10 @@
 set(SHADER_SRC_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-file(
-        GLOB_RECURSE
-        SHADER_SRC_LIST
-        ${SHADER_SRC_DIR}/*.vert
-        ${SHADER_SRC_DIR}/*.tesc
-        ${SHADER_SRC_DIR}/*.tese
-        ${SHADER_SRC_DIR}/*.geom
-        ${SHADER_SRC_DIR}/*.frag
-        ${SHADER_SRC_DIR}/*.comp)
+set(SHADER_SRC_LIST
+        ${SHADER_SRC_DIR}/vs/Mesh.vert
+        ${SHADER_SRC_DIR}/vs/Particles.vert
+        ${SHADER_SRC_DIR}/fs/Mesh.frag
+        ${SHADER_SRC_DIR}/fs/Particles.frag)
 
 
 set(SHADERS_INCLUDE_DIR "${CMAKE_BINARY_DIR}/configured_files/include/drip/gfx/shaders")
@@ -41,4 +37,3 @@ endforeach ()
 set_source_files_properties(${SHADER_HEADERS} PROPERTIES GENERATED TRUE)
 add_custom_target(drip_shader DEPENDS ${SHADER_HEADERS})
 set_target_properties(drip_shader PROPERTIES FOLDER "Shaders")
-

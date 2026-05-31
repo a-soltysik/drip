@@ -1,8 +1,8 @@
-add_library(drip_engine STATIC ${ENGINE_SRC})
-add_library(drip::engine ALIAS drip_engine)
+add_library(drip_gfx STATIC)
+add_library(drip::gfx ALIAS drip_gfx)
 
 target_sources(
-        drip_engine
+        drip_gfx
         PRIVATE
         src/gui/GuiManager.cpp
 
@@ -34,7 +34,7 @@ target_sources(
 )
 
 target_include_directories(
-        drip_engine
+        drip_gfx
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/configured_files/include>
@@ -43,25 +43,16 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-
-find_package(Vulkan REQUIRED)
 target_link_system_libraries(
-        drip_engine
+        drip_gfx
         PRIVATE
         drip::common
         Vulkan::Vulkan
         glm::glm
         imgui::imgui)
 
-target_link_libraries(
-        drip_engine
-        PRIVATE
-        drip::options
-        drip::warnings
-)
-
 target_compile_definitions(
-        drip_engine
+        drip_gfx
         PUBLIC
         VULKAN_HPP_ASSERT_ON_RESULT=DRIP_EXPECT
         VULKAN_HPP_ASSERT=DRIP_DEBUG_EXPECT
@@ -80,6 +71,6 @@ target_compile_definitions(
 set(ENGINE_TARGET_NAME "drip::engine")
 add_subdirectory(config)
 add_subdirectory(shader)
-add_dependencies(drip_engine drip_shader)
+add_dependencies(drip_gfx drip_shader)
 
-set_target_properties(drip_engine PROPERTIES FOLDER "Libraries")
+drip_library(drip_gfx)

@@ -1,4 +1,4 @@
-add_library(drip_common STATIC ${COMMON_SRC})
+add_library(drip_common STATIC)
 add_library(drip::common ALIAS drip_common)
 
 target_sources(
@@ -20,8 +20,6 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-
-find_package(Vulkan REQUIRED)
 target_link_system_libraries(
         drip_common
         PUBLIC
@@ -33,11 +31,4 @@ target_link_system_libraries(
         glm::glm
 )
 
-target_link_libraries(
-        drip_common
-        PRIVATE
-        drip::options
-        drip::warnings
-)
-
-set_target_properties(drip_common PROPERTIES FOLDER "Libraries")
+drip_library(drip_common)
